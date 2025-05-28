@@ -43,4 +43,13 @@ public class ExpresionAccesoRegistro extends NonTerminal {
     public void setFirstField(String firstField) {
         this.firstField = firstField;
     }
+
+    @Override
+    public String toString() {
+        return "ExpresionAccesoRegistro{" +
+                "type=" + (type != null ? type.toString() : "null") +
+                ", temporal=" + (temporal != null ? temporal.toString() : "null") +
+                ", firstField='" + (firstField != null ? firstField : "null") + '\'' +
+                '}';
+    }
 }

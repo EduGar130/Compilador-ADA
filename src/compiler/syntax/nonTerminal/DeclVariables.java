@@ -27,4 +27,20 @@ public class DeclVariables extends NonTerminal {
     public List<DeclVariable> getVariables() {
         return variables;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("DeclVariables{");
+        sb.append("variables=");
+        if (variables.isEmpty()) {
+            sb.append("[]");
+        } else {
+            sb.append("\n");
+            for (DeclVariable variable : variables) {
+                sb.append("  ").append(variable.toString()).append("\n");
+            }
+            sb.append("}");
+        }
+        return sb.toString();
+    }
 }

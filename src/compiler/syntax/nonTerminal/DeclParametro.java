@@ -38,4 +38,13 @@ public class DeclParametro extends NonTerminal {
     public boolean isSalida() {
         return salida;
     }
+
+    @Override
+    public String toString() {
+        return "DeclParametro{" +
+                "listaParametros=" + (listaParametros != null ? listaParametros.toString() : "null") +
+                ", tipo=" + (tipo != null ? tipo.toString() : "null") +
+                ", salida=" + salida +
+                '}';
+    }
 }

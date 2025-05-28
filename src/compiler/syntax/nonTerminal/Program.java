@@ -90,4 +90,12 @@ public class Program extends NonTerminal {
 
         return code;
     }
+
+    @Override
+    public String toString() {
+        return "Program{" +
+                "declaraciones=" + (declaraciones != null ? declaraciones.toString() : "null") +
+                ", cuerpo=" + (cuerpo != null ? cuerpo.toString() : "null") +
+                '}';
+    }
 }

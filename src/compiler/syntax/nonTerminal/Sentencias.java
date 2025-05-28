@@ -59,4 +59,24 @@ public class Sentencias extends NonTerminal {
     public void addSentencia(Sentencia sentencia) {
         this.sentencias.add(sentencia);
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("Sentencias{");
+        sb.append("sentencias=");
+        if (sentencias != null && !sentencias.isEmpty()) {
+            sb.append("[");
+            for (int i = 0; i < sentencias.size(); i++) {
+                sb.append(sentencias.get(i).toString());
+                if (i < sentencias.size() - 1) {
+                    sb.append(", ");
+                }
+            }
+            sb.append("]");
+        } else {
+            sb.append("null");
+        }
+        sb.append('}');
+        return sb.toString();
+    }
 }

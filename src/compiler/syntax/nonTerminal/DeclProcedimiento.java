@@ -38,4 +38,14 @@ public class DeclProcedimiento extends NonTerminal {
     public Cuerpo getCuerpo() {
         return cuerpo;
     }
+
+    @Override
+    public String toString() {
+        return "DeclProcedimiento{" +
+                "nombre='" + (nombre != null ? nombre : "null") + '\'' +
+                ", parametros=" + (parametros != null ? parametros.toString() : "null") +
+                ", declaraciones=" + (declaraciones != null ? declaraciones.toString() : "null") +
+                ", cuerpo=" + (cuerpo != null ? cuerpo.toString() : "null") +
+                '}';
+    }
 }

@@ -48,4 +48,13 @@ public class Parametro extends NonTerminal {
     public Expresion getExpresion() {
         return expresion;
     }
+
+    @Override
+    public String toString() {
+        return "Parametro{" +
+                "esCadena=" + esCadena +
+                ", cadena='" + (cadena != null ? cadena : "null") + '\'' +
+                ", expresion=" + (expresion != null ? expresion.toString() : "null") +
+                '}';
+    }
 }

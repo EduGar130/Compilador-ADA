@@ -34,4 +34,12 @@ public class SentenciaWhile extends Sentencia {
     public void setCuerpo(Sentencias cuerpo) {
         this.cuerpo = cuerpo;
     }
+
+    @Override
+    public String toString() {
+        return "SentenciaWhile{" +
+                "condicion=" + (condicion != null ? condicion.toString() : "null") +
+                ", cuerpo=" + (cuerpo != null ? cuerpo.toString() : "null") +
+                '}';
+    }
 }

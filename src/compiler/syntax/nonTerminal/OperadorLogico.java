@@ -19,4 +19,11 @@ public class OperadorLogico extends NonTerminal {
     public String getOperacion() {
         return operacion;
     }
+
+    @Override
+    public String toString() {
+        return "OperadorLogico{" +
+                "operacion='" + operacion + '\'' +
+                '}';
+    }
 }

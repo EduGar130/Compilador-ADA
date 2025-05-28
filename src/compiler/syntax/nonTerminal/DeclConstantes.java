@@ -62,4 +62,12 @@ public class DeclConstantes extends NonTerminal {
     public List<Constante> getConstantes() {
         return constantes;
     }
+
+    @Override
+    public String toString() {
+        return "DeclConstantes{" +
+                "symbol=" + (symbol != null ? symbol.toString() : "null") +
+                ", constantes=" + (constantes != null ? constantes.toString() : "null") +
+                '}';
+    }
 }

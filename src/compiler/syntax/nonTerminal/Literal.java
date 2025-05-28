@@ -64,4 +64,13 @@ public class Literal extends NonTerminal {
         TemporalFactory factory = new TemporalFactory(scope);
         this.temporal = factory.create();
     }
+
+    @Override
+    public String toString() {
+        return "Literal{" +
+                "valor='" + valor + '\'' +
+                ", type=" + (type != null ? type.toString() : "null") +
+                ", temporal=" + (temporal != null ? temporal.toString() : "null") +
+                '}';
+    }
 }

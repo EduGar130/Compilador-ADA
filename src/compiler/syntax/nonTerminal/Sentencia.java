@@ -67,4 +67,17 @@ public class Sentencia extends NonTerminal {
     public SentenciaProcedimiento getSentenciaProcedimiento() {
         return sentenciaProcedimiento;
     }
+
+    @Override
+    public String toString() {
+        return "Sentencia{" +
+                "sentenciaAsignacion=" + (sentenciaAsignacion != null ? sentenciaAsignacion.toString() : "null") +
+                ", sentenciaIf=" + (sentenciaIf != null ? sentenciaIf.toString() : "null") +
+                ", sentenciaWhile=" + (sentenciaWhile != null ? sentenciaWhile.toString() : "null") +
+                ", sentenciaReturn=" + (sentenciaReturn != null ? sentenciaReturn.toString() : "null") +
+                ", sentenciaPutLine=" + (sentenciaPutLine != null ? sentenciaPutLine.toString() : "null") +
+                ", sentenciaProcedimiento="
+                + (sentenciaProcedimiento != null ? sentenciaProcedimiento.toString() : "null") +
+                '}';
+    }
 }

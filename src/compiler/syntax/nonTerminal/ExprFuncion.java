@@ -91,4 +91,14 @@ public class ExprFuncion extends NonTerminal {
     public void setFuncion(SymbolFunction funcion) {
         this.funcion = funcion;
     }
+
+    @Override
+    public String toString() {
+        return "ExprFuncion{" +
+                "symbol=" + (symbol != null ? symbol.toString() : "null") +
+                ", parametros=" + (parametros != null ? parametros.toString() : "null") +
+                ", temporal=" + (temporal != null ? temporal.toString() : "null") +
+                ", funcion=" + (funcion != null ? funcion.toString() : "null") +
+                '}';
+    }
 }

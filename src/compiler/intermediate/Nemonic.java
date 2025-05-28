@@ -19,6 +19,7 @@ public class Nemonic {
     public final static String LS = "LS"; // LS x y z --> (y < z)? 1 : 0 (menor o igual)
     public final static String MUL = "MUL"; // MUL x y z --> x := y * z (multiplicacin)
     public final static String MV = "MV"; // MV x y --> x := y (asignación)
+    public final static String MVR = "MVR"; // MVR x y --> x := &y (asignación de dirección)
     public final static String MVA = "MVA"; // MVA x y --> x := &y (dirección)
     public final static String MVP = "MVP"; // MVP x y --> x := *y (indirección)
     public final static String XOR = "XOR"; // XOR x y z --> x := y ^ z (disyunción exclusiva)

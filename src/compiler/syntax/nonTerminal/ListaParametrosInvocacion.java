@@ -60,4 +60,11 @@ public class ListaParametrosInvocacion extends NonTerminal {
     public void addParametro(Expresion parametros) {
         this.parametros.add(parametros);
     }
+
+    @Override
+    public String toString() {
+        return "ListaParametrosInvocacion{" +
+                "parametros=" + parametros +
+                '}';
+    }
 }

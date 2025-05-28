@@ -30,4 +30,11 @@ public class DeclTipo extends NonTerminal {
     public void setTipoRecord(TypeRecord tipoRecord) {
         this.tipoRecord = tipoRecord;
     }
+
+    @Override
+    public String toString() {
+        return "DeclTipo{" +
+                "tipoRecord=" + (tipoRecord != null ? tipoRecord.toString() : "null") +
+                '}';
+    }
 }

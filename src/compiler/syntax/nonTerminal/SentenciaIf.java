@@ -42,4 +42,13 @@ public class SentenciaIf extends Sentencia {
     public void setCuerpoElse(Sentencias cuerpoElse) {
         this.cuerpoElse = cuerpoElse;
     }
+
+    @Override
+    public String toString() {
+        return "SentenciaIf{" +
+                "condicion=" + (condicion != null ? condicion.toString() : "null") +
+                ", cuerpoThen=" + (cuerpoThen != null ? cuerpoThen.toString() : "null") +
+                ", cuerpoElse=" + (cuerpoElse != null ? cuerpoElse.toString() : "null") +
+                '}';
+    }
 }

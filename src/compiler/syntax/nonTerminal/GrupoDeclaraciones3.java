@@ -20,4 +20,11 @@ public class GrupoDeclaraciones3 extends NonTerminal {
     public DeclSubprogramas getDeclSubprogramas() {
         return declSubprogramas;
     }
+
+    @Override
+    public String toString() {
+        return "GrupoDeclaraciones3{" +
+                "declSubprogramas=" + (declSubprogramas != null ? declSubprogramas.toString() : "null") +
+                '}';
+    }
 }

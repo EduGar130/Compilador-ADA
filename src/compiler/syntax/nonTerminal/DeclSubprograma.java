@@ -30,4 +30,12 @@ public class DeclSubprograma extends NonTerminal {
     public DeclProcedimiento getProcedimiento() {
         return procedimiento;
     }
+
+    @Override
+    public String toString() {
+        return "DeclSubprograma{" +
+                "function=" + (function != null ? function.toString() : "null") +
+                ", procedimiento=" + (procedimiento != null ? procedimiento.toString() : "null") +
+                '}';
+    }
 }

@@ -60,4 +60,12 @@ public class CuerpoFunction extends NonTerminal {
     public void setSentencias(Sentencias sentencias) {
         this.sentencias = sentencias;
     }
+
+    @Override
+    public String toString() {
+        return "CuerpoFunction{" +
+                "declaraciones=" + (declaraciones != null ? declaraciones.toString() : "null") +
+                ", sentencias=" + (sentencias != null ? sentencias.toString() : "null") +
+                '}';
+    }
 }

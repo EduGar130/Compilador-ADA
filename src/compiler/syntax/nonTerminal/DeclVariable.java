@@ -45,4 +45,12 @@ public class DeclVariable extends NonTerminal {
     public void setTipo(TypeIF tipo) {
         this.tipo = tipo;
     }
+
+    @Override
+    public String toString() {
+        return "DeclVariable{" +
+                "nombre='" + (nombre != null ? nombre : "null") + '\'' +
+                ", tipo=" + (tipo != null ? tipo.toString() : "null") +
+                '}';
+    }
 }

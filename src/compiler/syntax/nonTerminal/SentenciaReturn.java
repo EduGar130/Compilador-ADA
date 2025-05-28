@@ -25,4 +25,11 @@ public class SentenciaReturn extends Sentencia {
     public void setExpresion(Expresion expresion) {
         this.expresion = expresion;
     }
+
+    @Override
+    public String toString() {
+        return "SentenciaReturn{" +
+                "expresion=" + (expresion != null ? expresion.toString() : "null") +
+                '}';
+    }
 }

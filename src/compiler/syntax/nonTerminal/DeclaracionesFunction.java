@@ -9,7 +9,7 @@ package compiler.syntax.nonTerminal;
  * Autor: Eduardo Garcia Romera
  * Email: egarcia3266@alumno.uned.es
  * DNI: 54487155V
- * Versión: 1.0
+ * Versión: 1.5
  */
 public class DeclaracionesFunction extends NonTerminal {
 
@@ -21,5 +21,12 @@ public class DeclaracionesFunction extends NonTerminal {
 
     public GrupoDeclaraciones1 getGrupoDeclaraciones1() {
         return grupoDeclaraciones1;
+    }
+
+    @Override
+    public String toString() {
+        return "DeclaracionesFunction{" +
+                "grupoDeclaraciones1=" + (grupoDeclaraciones1 != null ? grupoDeclaraciones1.toString() : "null") +
+                '}';
     }
 }

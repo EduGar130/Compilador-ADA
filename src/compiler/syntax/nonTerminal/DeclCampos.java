@@ -60,4 +60,11 @@ public class DeclCampos extends NonTerminal {
     public void addCampo(DeclCampo campo) {
         this.campos.add(campo);
     }
+
+    @Override
+    public String toString() {
+        return "DeclCampos{" +
+                "campos=" + (campos != null ? campos.toString() : "null") +
+                '}';
+    }
 }

@@ -37,4 +37,11 @@ public class TipoRetorno extends NonTerminal {
     public void setType(TypeIF type) {
         this.type = type;
     }
+
+    @Override
+    public String toString() {
+        return "TipoRetorno{" +
+                "type=" + (type != null ? type.toString() : "null") +
+                '}';
+    }
 }

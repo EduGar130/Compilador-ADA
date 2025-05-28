@@ -63,4 +63,12 @@ public class Operando extends NonTerminal {
     public void setTemporal(TemporalIF temp) {
         this.temp = temp;
     }
+
+    @Override
+    public String toString() {
+        return "Operando{" +
+                "type=" + (type != null ? type.toString() : "null") +
+                ", temp=" + (temp != null ? temp.toString() : "null") +
+                '}';
+    }
 }

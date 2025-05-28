@@ -23,4 +23,11 @@ public class DeclParametros extends NonTerminal {
     public List<DeclParametro> getParametros() {
         return parametros;
     }
+
+    @Override
+    public String toString() {
+        return "DeclParametros{" +
+                "parametros=" + (parametros != null ? parametros.toString() : "null") +
+                '}';
+    }
 }

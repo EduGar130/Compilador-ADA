@@ -49,4 +49,11 @@ public class Tipo extends NonTerminal {
     public void setType(TypeIF type) {
         this.type = type;
     }
+
+    @Override
+    public String toString() {
+        return "Tipo{" +
+                "type=" + (type != null ? type.toString() : "null") +
+                '}';
+    }
 }

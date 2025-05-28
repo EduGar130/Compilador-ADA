@@ -25,4 +25,11 @@ public class SentenciaProcedimiento extends Sentencia {
     public void setFuncion(ExprFuncion funcion) {
         this.funcion = funcion;
     }
+
+    @Override
+    public String toString() {
+        return "SentenciaProcedimiento{" +
+                "funcion=" + (funcion != null ? funcion.toString() : "null") +
+                '}';
+    }
 }

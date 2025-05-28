@@ -23,4 +23,20 @@ public class ListaParametros extends NonTerminal {
     public List<String> getIdentificadores() {
         return identificadores;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("ListaParametros{");
+        sb.append("identificadores=");
+        if (identificadores.isEmpty()) {
+            sb.append("[]");
+        } else {
+            sb.append("\n");
+            for (String id : identificadores) {
+                sb.append("  ").append(id).append("\n");
+            }
+            sb.append("}");
+        }
+        return sb.toString();
+    }
 }

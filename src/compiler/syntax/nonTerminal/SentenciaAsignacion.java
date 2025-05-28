@@ -29,4 +29,12 @@ public class SentenciaAsignacion extends NonTerminal {
     public void setExpresion(Expresion expresion) {
         this.expresion = expresion;
     }
+
+    @Override
+    public String toString() {
+        return "SentenciaAsignacion{" +
+                "ref=" + (ref != null ? ref.toString() : "null") +
+                ", expresion=" + (expresion != null ? expresion.toString() : "null") +
+                '}';
+    }
 }

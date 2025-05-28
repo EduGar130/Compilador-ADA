@@ -56,4 +56,15 @@ public class DeclFunction extends NonTerminal {
     public CuerpoFunction getCuerpo() {
         return cuerpo;
     }
+
+    @Override
+    public String toString() {
+        return "DeclFunction{" +
+                "nombre='" + (nombre != null ? nombre : "null") + '\'' +
+                ", parametros=" + (parametros != null ? parametros.toString() : "null") +
+                ", tipoRetorno=" + (tipoRetorno != null ? tipoRetorno.toString() : "null") +
+                ", declaraciones=" + (declaraciones != null ? declaraciones.toString() : "null") +
+                ", cuerpo=" + (cuerpo != null ? cuerpo.toString() : "null") +
+                '}';
+    }
 }

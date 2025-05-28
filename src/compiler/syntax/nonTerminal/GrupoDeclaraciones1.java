@@ -29,4 +29,12 @@ public class GrupoDeclaraciones1 extends NonTerminal {
     public GrupoDeclaraciones2 getGrupoDeclaraciones2() {
         return grupoDeclaraciones2;
     }
+
+    @Override
+    public String toString() {
+        return "GrupoDeclaraciones1{" +
+                "declTipos=" + (declTipos != null ? declTipos.toString() : "null") +
+                ", grupoDeclaraciones2=" + (grupoDeclaraciones2 != null ? grupoDeclaraciones2.toString() : "null") +
+                '}';
+    }
 }

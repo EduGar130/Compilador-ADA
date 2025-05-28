@@ -63,4 +63,12 @@ public class Constante extends NonTerminal {
     public void setType(TypeIF type) {
         this.type = type;
     }
+
+    @Override
+    public String toString() {
+        return "Constante{" +
+                "symbol=" + (symbol != null ? symbol.toString() : "null") +
+                ", type=" + (type != null ? type.toString() : "null") +
+                '}';
+    }
 }

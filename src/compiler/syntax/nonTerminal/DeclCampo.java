@@ -43,4 +43,12 @@ public class DeclCampo extends NonTerminal {
     public void setTipo(Tipo tipo) {
         this.tipo = tipo;
     }
+
+    @Override
+    public String toString() {
+        return "DeclCampo{" +
+                "nombre='" + (nombre != null ? nombre : "null") + '\'' +
+                ", tipo=" + (tipo != null ? tipo.toString() : "null") +
+                '}';
+    }
 }

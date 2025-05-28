@@ -180,207 +180,291 @@ precedence left     IDENTIFICADOR, ACCESO, PARENTESISAP, PARENTESISCIERRE;
 
 start with program;
 
-program ::= 
+program ::=
   {: 
-        syntaxErrorManager.syntaxInfo ("Starting parsing..."); 
-        
+        syntaxErrorManager.syntaxInfo("Starting parsing...");
+
         // Apertura del Scope Global
         semanticErrorManager.semanticInfo("Abriendo Scope Global...");
         scopeManager.openScope("global");
-        semanticErrorManager.semanticDebug("Scope Global abierto correctamente.");
-
-    	// Registrar los tipos primitivos en el Scope Global
-        semanticErrorManager.semanticInfo("Registrando tipos primitivos...");
         ScopeIF globalScope = scopeManager.getCurrentScope();
+        semanticErrorManager.semanticDebug("Scope abierto: " + globalScope);
 
-		TypeTableIF typeTable = globalScope.getTypeTable();
-        
+        // Registrar los tipos primitivos
+        semanticErrorManager.semanticInfo("Registrando tipos primitivos...");
+        TypeTableIF typeTable = globalScope.getTypeTable();
+
         TypeBoolean typeBoolean = new TypeBoolean(globalScope);
         typeTable.addType(typeBoolean);
-        
+        semanticErrorManager.semanticDebug("Tipo BOOLEAN registrado: " + typeBoolean);
+
         TypeInteger typeInteger = new TypeInteger(globalScope);
         typeTable.addType(typeInteger);
+        semanticErrorManager.semanticDebug("Tipo INTEGER registrado: " + typeInteger);
 
-        semanticErrorManager.semanticDebug("Tipos BOOLEAN e INTEGER registrados correctamente.");
+        semanticErrorManager.semanticDebug("Tabla de tipos en scope global: " + typeTable);
+
   :}
   axiom:ax
   {:   		
-		if (ax == null) {
-			semanticFatalError(SemanticErrors.NPV, 0, 0);
-		}
-
-		semanticErrorManager.semanticInfo("Programa analizado correctamente.");
-  		
-  		List intermediateCode = ax.getIntermediateCode ();
-  		if (intermediateCode != null) {
-            finalCodeFactory.create(intermediateCode);
-            semanticErrorManager.semanticDebug("Código intermedio y final generados correctamente.");
-        }
-        else {
+        if (ax == null) {
             semanticFatalError(SemanticErrors.NPV, 0, 0);
         }
-  		
-  		syntaxErrorManager.syntaxInfo ("Parsing process ended.");
-  		
-		scopeManager.closeScope();
-   :};
+
+        semanticErrorManager.semanticInfo("Programa analizado correctamente.");
+        semanticErrorManager.semanticDebug("AXIOM: " + ax.toString());
+
+        List intermediateCode = ax.getIntermediateCode();
+        if (intermediateCode != null) {
+            semanticErrorManager.semanticInfo("Generamos output .ens");
+            finalCodeFactory.create(intermediateCode);
+            semanticErrorManager.semanticDebug("Código intermedio generado: " + intermediateCode);
+        } else {
+            semanticFatalError(SemanticErrors.NPV, 0, 0);
+        }
+
+        syntaxErrorManager.syntaxInfo("Parsing process ended.");
+        scopeManager.closeScope();
+        semanticErrorManager.semanticDebug("Scope Global cerrado correctamente.");
+  :};
+
    
 
 axiom ::= PROCEDURE IDENTIFICADOR:id PARENTESISAP PARENTESISCIERRE IS declaraciones:decl cuerpo:c
 {:
+    Token idToken = (Token) id;
+
+    semanticErrorManager.semanticInfo("Procesando axioma del procedimiento: " + idToken.getLexema());
+
     if (decl == null) {
-        semanticFatalError(SemanticErrors.NDC, ((Token)id).getLine(), ((Token)id).getColumn());
+        semanticFatalError(SemanticErrors.NDC, idToken.getLine(), idToken.getColumn());
     }
     if (c == null) {
-        semanticFatalError(SemanticErrors.CPI, ((Token)id).getLine(), ((Token)id).getColumn());
+        semanticFatalError(SemanticErrors.CPI, idToken.getLine(), idToken.getColumn());
     }
-    
-    RESULT = new Axiom(new Program(decl, c));
-    // TODO: Verificar que el programa contiene declaraciones y cuerpo correctos
+
+    Axiom axiom = new Axiom(new Program(decl, c));
+
+    semanticErrorManager.semanticDebug("Declaraciones procesadas: " + decl.toString());
+    semanticErrorManager.semanticDebug("Cuerpo del programa: " + c.toString());
+    semanticErrorManager.semanticDebug("Objeto Axiom generado: " + axiom.toString());
+
+    RESULT = axiom;
 :};
+
             
 
 //declaraciones
 declaraciones ::= declConstantes:dc grupoDeclaraciones1:gd1
 {:
+    semanticErrorManager.semanticInfo("Procesando conjunto de declaraciones con constantes y declaraciones generales.");
+
     Declaraciones declaraciones = new Declaraciones();
-    declaraciones.setDeclConstantes((DeclConstantes)dc);
-    declaraciones.setGrupoDeclaraciones1((GrupoDeclaraciones1)gd1);
+    declaraciones.setDeclConstantes((DeclConstantes) dc);
+    declaraciones.setGrupoDeclaraciones1((GrupoDeclaraciones1) gd1);
+
+    semanticErrorManager.semanticDebug("DeclConstantes: " + dc.toString());
+    semanticErrorManager.semanticDebug("GrupoDeclaraciones1: " + gd1.toString());
+    semanticErrorManager.semanticDebug("Declaraciones generadas: " + declaraciones.toString());
+
     RESULT = declaraciones;
 :}
 | grupoDeclaraciones1:gd1
 {:
+    semanticErrorManager.semanticInfo("Procesando conjunto de declaraciones sin constantes.");
+
     Declaraciones declaraciones = new Declaraciones();
-    declaraciones.setGrupoDeclaraciones1((GrupoDeclaraciones1)gd1);
+    declaraciones.setGrupoDeclaraciones1((GrupoDeclaraciones1) gd1);
+
+    semanticErrorManager.semanticDebug("GrupoDeclaraciones1: " + gd1.toString());
+    semanticErrorManager.semanticDebug("Declaraciones generadas: " + declaraciones.toString());
+
     RESULT = declaraciones;
 :};
 
-
 grupoDeclaraciones1 ::= declTipos:dt grupoDeclaraciones2:gd2
 {:
+    semanticErrorManager.semanticInfo("Procesando grupo de declaraciones 1 con tipos y grupo de declaraciones 2.");
+
     GrupoDeclaraciones1 grupoDeclaraciones1 = new GrupoDeclaraciones1();
-    grupoDeclaraciones1.setDeclTipos((DeclTipos)dt);
-    grupoDeclaraciones1.setGrupoDeclaraciones2((GrupoDeclaraciones2)gd2);
+    grupoDeclaraciones1.setDeclTipos((DeclTipos) dt);
+    grupoDeclaraciones1.setGrupoDeclaraciones2((GrupoDeclaraciones2) gd2);
+
+    semanticErrorManager.semanticDebug("DeclTipos: " + dt.toString());
+    semanticErrorManager.semanticDebug("GrupoDeclaraciones2: " + gd2.toString());
+    semanticErrorManager.semanticDebug("GrupoDeclaraciones1 generado: " + grupoDeclaraciones1.toString());
+
     RESULT = grupoDeclaraciones1;
 :}
 | grupoDeclaraciones2:gd2
 {:
+    semanticErrorManager.semanticInfo("Procesando grupo de declaraciones 1 sin tipos (solo grupo de declaraciones 2).");
+
     GrupoDeclaraciones1 grupoDeclaraciones1 = new GrupoDeclaraciones1();
-    grupoDeclaraciones1.setGrupoDeclaraciones2((GrupoDeclaraciones2)gd2);
+    grupoDeclaraciones1.setGrupoDeclaraciones2((GrupoDeclaraciones2) gd2);
+
+    semanticErrorManager.semanticDebug("GrupoDeclaraciones2: " + gd2.toString());
+    semanticErrorManager.semanticDebug("GrupoDeclaraciones1 generado: " + grupoDeclaraciones1.toString());
+
     RESULT = grupoDeclaraciones1;
 :};
 
-
 grupoDeclaraciones2 ::= declVariables:dv grupoDeclaraciones3:gd3
 {:
+    semanticErrorManager.semanticInfo("Procesando grupo de declaraciones 2 con variables y grupo de declaraciones 3.");
+
     GrupoDeclaraciones2 grupoDeclaraciones2 = new GrupoDeclaraciones2();
-    grupoDeclaraciones2.setDeclVariables((DeclVariables)dv);
-    grupoDeclaraciones2.setGrupoDeclaraciones3((GrupoDeclaraciones3)gd3);
+    grupoDeclaraciones2.setDeclVariables((DeclVariables) dv);
+    grupoDeclaraciones2.setGrupoDeclaraciones3((GrupoDeclaraciones3) gd3);
+
+    semanticErrorManager.semanticDebug("DeclVariables: " + dv.toString());
+    semanticErrorManager.semanticDebug("GrupoDeclaraciones3: " + gd3.toString());
+    semanticErrorManager.semanticDebug("GrupoDeclaraciones2 generado: " + grupoDeclaraciones2.toString());
+
     RESULT = grupoDeclaraciones2;
 :}
 | grupoDeclaraciones3:gd3
 {:
+    semanticErrorManager.semanticInfo("Procesando grupo de declaraciones 2 sin variables (solo grupo de declaraciones 3).");
+
     GrupoDeclaraciones2 grupoDeclaraciones2 = new GrupoDeclaraciones2();
-    grupoDeclaraciones2.setGrupoDeclaraciones3((GrupoDeclaraciones3)gd3);
+    grupoDeclaraciones2.setGrupoDeclaraciones3((GrupoDeclaraciones3) gd3);
+
+    semanticErrorManager.semanticDebug("GrupoDeclaraciones3: " + gd3.toString());
+    semanticErrorManager.semanticDebug("GrupoDeclaraciones2 generado: " + grupoDeclaraciones2.toString());
+
     RESULT = grupoDeclaraciones2;
 :};
 
-
 grupoDeclaraciones3 ::= declSubprogramas:ds
 {:
+    semanticErrorManager.semanticInfo("Procesando grupo de declaraciones 3 con subprogramas.");
+
     GrupoDeclaraciones3 grupoDeclaraciones3 = new GrupoDeclaraciones3();
-    grupoDeclaraciones3.setDeclSubprogramas((DeclSubprogramas)ds);
+    grupoDeclaraciones3.setDeclSubprogramas((DeclSubprogramas) ds);
+
+    semanticErrorManager.semanticDebug("DeclSubprogramas: " + ds.toString());
+    semanticErrorManager.semanticDebug("GrupoDeclaraciones3 generado: " + grupoDeclaraciones3.toString());
+
     RESULT = grupoDeclaraciones3;
 :}
 | /* vacío */
 {:
+    semanticErrorManager.semanticInfo("Procesando grupo de declaraciones 3 vacío (sin subprogramas).");
+
     GrupoDeclaraciones3 grupoDeclaraciones3 = new GrupoDeclaraciones3();
     grupoDeclaraciones3.setDeclSubprogramas(null);
+
+    semanticErrorManager.semanticDebug("GrupoDeclaraciones3 generado (vacío): " + grupoDeclaraciones3.toString());
+
     RESULT = grupoDeclaraciones3;
 :};
-
-
 
 //declaración de constantes
 declConstantes ::= constante:c
 {:
+    semanticErrorManager.semanticInfo("Procesando primera constante simbólica.");
+
     DeclConstantes declConstantes = new DeclConstantes();
     declConstantes.addConstante(c);
+
+    semanticErrorManager.semanticDebug("Constante añadida: " + c.toString());
+    semanticErrorManager.semanticDebug("DeclConstantes actual: " + declConstantes.toString());
+
     RESULT = declConstantes;
 :}
 | declConstantes:dcs constante:c
 {:
+    semanticErrorManager.semanticInfo("Añadiendo constante simbólica adicional.");
+
     dcs.addConstante(c);
+
+    semanticErrorManager.semanticDebug("Constante añadida: " + c.toString());
+    semanticErrorManager.semanticDebug("DeclConstantes actualizada: " + dcs.toString());
+
     RESULT = dcs;
 :};
 
 constante ::= IDENTIFICADOR:id DELIMTIPO CONSTANT ASIGNACION literal:lit DELIMPUNTOCOMA
 {:
-    // Creo el símbolo constante
-    TypeIF type = ((Literal)lit).getType();
+    semanticErrorManager.semanticInfo("Procesando declaración de constante simbólica: " + id.getLexema());
+
+    TypeIF type = ((Literal) lit).getType();
     SymbolConstant symbol = new SymbolConstant(id.getLexema(), scopeManager.getCurrentScope(), type);
-    symbol.setType(((Literal)lit).getType());
+    symbol.setType(type);
 
     SymbolTableIF symbolTable = scopeManager.getCurrentScope().getSymbolTable();
-    // Inserto en la tabla de símbolos
+
     if (symbolTable.containsSymbol(id.getLexema())) {
         semanticFatalError("Constante duplicada: " + id.getLexema(), id.getLine(), id.getColumn());
     }
-    
+
     symbolTable.addSymbol(symbol);
 
-    // Informo en el debug
-    semanticErrorManager.semanticDebug("Constante '" + id.getLexema() + "' de tipo " + type.getName() + " añadida a la tabla de símbolos.");
+    semanticErrorManager.semanticDebug("Constante añadida -> " + symbol.toString());
+    semanticErrorManager.semanticDebug("Tabla de símbolos actualizada:\n" + symbolTable.toString());
 
-    // Creo el objeto Constante que propaga el símbolo y el tipo
-    RESULT = new Constante(symbol, symbol.getType());
+    Constante constante = new Constante(symbol, type);
+    semanticErrorManager.semanticDebug("Objeto Constante generado: " + constante.toString());
+
+    RESULT = constante;
 :};
-
-
-
 
 literal ::= ENTERO:ent
 {:
-    semanticErrorManager.semanticDebug("Procesando literal ENTERO: " + ent);
-    
-	TypeInteger typeInteger = (TypeInteger) scopeManager.searchType("INTEGER");
-    RESULT = new Literal(ent.getLexema(), typeInteger);
-    
-    // Crear temporal asociado
+    semanticErrorManager.semanticInfo("Procesando literal entero: " + ent.getLexema());
+
+    TypeInteger typeInteger = (TypeInteger) scopeManager.searchType("INTEGER");
+    Literal literal = new Literal(ent.getLexema(), typeInteger);
+
     if (scopeManager.getCurrentScope() != null) {
-        RESULT.crearTemporal(scopeManager.getCurrentScope());
-        semanticErrorManager.semanticDebug("Temporal para ENTERO creado correctamente.");
+        literal.crearTemporal(scopeManager.getCurrentScope());
+        semanticErrorManager.semanticDebug("Literal entero con temporal generado: " + literal.toString());
     } else {
         semanticErrorManager.semanticFatalError("[Error] Scope actual no disponible para crear temporal.");
     }
+
+    RESULT = literal;
 :}
 | BOOLEANO:bool
 {:
-    semanticErrorManager.semanticDebug("Procesando literal BOOLEANO: " + bool);
-    
-	TypeBoolean typeBoolean = (TypeBoolean) scopeManager.searchType("BOOLEAN");
-    RESULT = new Literal(bool.getLexema(), typeBoolean);
-    
+    semanticErrorManager.semanticInfo("Procesando literal booleano: " + bool.getLexema());
+
+    TypeBoolean typeBoolean = (TypeBoolean) scopeManager.searchType("BOOLEAN");
+    Literal literal = new Literal(bool.getLexema(), typeBoolean);
+
     if (scopeManager.getCurrentScope() != null) {
-        RESULT.crearTemporal(scopeManager.getCurrentScope());
-        semanticErrorManager.semanticDebug("Temporal para BOOLEANO creado correctamente.");
+        literal.crearTemporal(scopeManager.getCurrentScope());
+        semanticErrorManager.semanticDebug("Literal booleano con temporal generado: " + literal.toString());
     } else {
         semanticErrorManager.semanticFatalError("[Error] Scope actual no disponible para crear temporal.");
     }
+
+    RESULT = literal;
 :};
-
-
 
 //declaración de tipos estructurados
 declTipos ::= declTipo:dt
 {:
+    semanticErrorManager.semanticInfo("Procesando primer tipo definido por el usuario.");
+
     DeclTipos declTipos = new DeclTipos();
     declTipos.addTipo(dt);
+
+    semanticErrorManager.semanticDebug("Tipo añadido: " + dt.toString());
+    semanticErrorManager.semanticDebug("DeclTipos generado: " + declTipos.toString());
+
     RESULT = declTipos;
 :}
 | declTipos:dts declTipo:dt
 {:
+    semanticErrorManager.semanticInfo("Procesando tipo adicional definido por el usuario.");
+
     dts.addTipo(dt);
+
+    semanticErrorManager.semanticDebug("Tipo añadido: " + dt.toString());
+    semanticErrorManager.semanticDebug("DeclTipos actualizado: " + dts.toString());
+
     RESULT = dts;
 :};
 
@@ -390,90 +474,125 @@ declTipo ::= TYPE IDENTIFICADOR:id IS RECORD declCampos:dcs END RECORD DELIMPUNT
     ScopeIF scope = scopeManager.getCurrentScope();
     TypeTableIF typeTable = scope.getTypeTable();
 
-    // Verificar si el tipo ya existe
+    semanticErrorManager.semanticInfo("Procesando declaración de tipo RECORD: " + nombreTipo);
+
     if (typeTable.containsType(nombreTipo)) {
         semanticFatalError("Tipo duplicado: " + nombreTipo, id.getLine(), id.getColumn());
     }
 
-    // Crear el nuevo tipo RECORD
     TypeRecord typeRecord = new TypeRecord(scope, nombreTipo);
 
-    // Añadir los campos
-    for (DeclCampo campo : ((DeclCampos)dcs).getCampos()) {
-        typeRecord.addCampo(campo.getNombre(), campo.getTipo().getType());
+    List<DeclCampo> campos = ((DeclCampos) dcs).getCampos();
+
+    if (campos == null || campos.isEmpty()) {
+        semanticFatalError("El tipo record '" + nombreTipo + "' no puede tener campos vacíos.", id.getLine(), id.getColumn());
     }
 
-    // Insertar el tipo en la tabla de tipos
+    for (DeclCampo campo : campos) {
+        typeRecord.addCampo(campo.getNombre(), campo.getTipo().getType());
+        semanticErrorManager.semanticDebug("Campo añadido al tipo '" + nombreTipo + "': " +
+            campo.getNombre() + " : " + campo.getTipo().getType().getName());
+    }
+
     typeTable.addType(typeRecord);
 
-    // Propagar el tipo
+    semanticErrorManager.semanticDebug("Tipo RECORD añadido a la tabla de tipos: " + typeRecord.toString());
+    semanticErrorManager.semanticDebug("Tabla de tipos actualizada:\n" + typeTable.toString());
+
     RESULT = new DeclTipo(typeRecord);
 :};
-
-
 
 // declaración de campos
 declCampos ::= declCampo:dc
 {:
+    semanticErrorManager.semanticInfo("Procesando primer campo de tipo RECORD.");
+
     DeclCampos declCampos = new DeclCampos();
-    declCampos.addCampo((DeclCampo)dc);
+    declCampos.addCampo((DeclCampo) dc);
+
+    semanticErrorManager.semanticDebug("Campo añadido: " + dc.toString());
+    semanticErrorManager.semanticDebug("DeclCampos generado: " + declCampos.toString());
+
     RESULT = declCampos;
 :}
 | declCampos:dcs declCampo:dc
 {:
-    dcs.addCampo((DeclCampo)dc);
+    semanticErrorManager.semanticInfo("Procesando campo adicional para tipo RECORD.");
+
+    dcs.addCampo((DeclCampo) dc);
+
+    semanticErrorManager.semanticDebug("Campo añadido: " + dc.toString());
+    semanticErrorManager.semanticDebug("DeclCampos actualizado: " + dcs.toString());
+
     RESULT = dcs;
 :};
 
 declCampo ::= IDENTIFICADOR:id DELIMTIPO tipo:t DELIMPUNTOCOMA
 {:
+    semanticErrorManager.semanticInfo("Procesando declaración de campo: " + id.getLexema());
+
     DeclCampo declCampo = new DeclCampo();
     declCampo.setNombre(id.getLexema());
-    declCampo.setTipo((Tipo)t);
+    declCampo.setTipo((Tipo) t);
+
+    semanticErrorManager.semanticDebug("Campo creado: " + declCampo.toString());
+
     RESULT = declCampo;
 :};
-
-
 
 //declaración de variables globales
 declVariables ::= declVariable:dv
 {:
+    semanticErrorManager.semanticInfo("Procesando primera variable global.");
+
     DeclVariables declVariables = new DeclVariables();
     declVariables.addVariable(dv);
+
+    semanticErrorManager.semanticDebug("Variable añadida: " + dv.toString());
+    semanticErrorManager.semanticDebug("DeclVariables generado: " + declVariables.toString());
+
     RESULT = declVariables;
 :}
 | declVariables:dvs declVariable:dv
 {:
+    semanticErrorManager.semanticInfo("Procesando variable global adicional.");
+
     dvs.addVariable(dv);
+
+    semanticErrorManager.semanticDebug("Variable añadida: " + dv.toString());
+    semanticErrorManager.semanticDebug("DeclVariables actualizado: " + dvs.toString());
+
     RESULT = dvs;
 :};
-
 
 declVariable ::= IDENTIFICADOR:id DELIMTIPO tipo:t
 {:
     String nombre = id.getLexema();
     TypeIF tipoVariable = ((Tipo)t).getType();
 
+    semanticErrorManager.semanticInfo("Procesando declaración de variable: " + nombre + " : " + tipoVariable.getName());
+
     // Crear el símbolo de la variable
     SymbolVariable symbol = new SymbolVariable(scopeManager.getCurrentScope(), nombre, tipoVariable);
 
-    // Insertar en la tabla de símbolos
     SymbolTableIF symbolTable = scopeManager.getCurrentScope().getSymbolTable();
     if (symbolTable.containsSymbol(nombre)) {
         semanticFatalError("Variable duplicada: " + nombre, id.getLine(), id.getColumn());
     }
     symbolTable.addSymbol(symbol);
 
-    // Propagar la variable
+    semanticErrorManager.semanticDebug("Variable registrada en TS: " + symbol.toString());
+    semanticErrorManager.semanticDebug("Tabla de símbolos tras inserción:\n" + symbolTable.toString());
+
     RESULT = new DeclVariable(nombre, tipoVariable);
 :}
 | IDENTIFICADOR:id DELIMLISTA declVariable:dv
 {:
-    // Caso de lista: identificador seguido de otra variable
     String nombre = id.getLexema();
     TypeIF tipoVariable = ((DeclVariable)dv).getTipo();
 
-    // Crear símbolo
+    semanticErrorManager.semanticInfo("Procesando variable en lista: " + nombre + " : " + tipoVariable.getName());
+
     SymbolVariable symbol = new SymbolVariable(scopeManager.getCurrentScope(), nombre, tipoVariable);
 
     SymbolTableIF symbolTable = scopeManager.getCurrentScope().getSymbolTable();
@@ -482,159 +601,229 @@ declVariable ::= IDENTIFICADOR:id DELIMTIPO tipo:t
     }
     symbolTable.addSymbol(symbol);
 
+    semanticErrorManager.semanticDebug("Variable registrada en TS: " + symbol.toString());
+    semanticErrorManager.semanticDebug("Tabla de símbolos tras inserción:\n" + symbolTable.toString());
+
     RESULT = new DeclVariable(nombre, tipoVariable);
 :};
 
-
 tipo ::= INTEGER
 {:
-    semanticErrorManager.semanticDebug("Tipo INTEGER");
+    semanticErrorManager.semanticInfo("Procesando tipo primitivo INTEGER.");
+    
     ScopeIF scope = scopeManager.getCurrentScope();
     TypeInteger typeInteger = (TypeInteger) scopeManager.searchType("INTEGER");
 
     if (typeInteger == null) {
-        semanticFatalError("Tipo INTEGER no encontrado en tabla de tipos.", 0, 0);
+        semanticFatalError("Tipo INTEGER no encontrado en la tabla de tipos.", 0, 0);
     }
 
     Tipo tipo = new Tipo();
     tipo.setType(typeInteger);
+
+    semanticErrorManager.semanticDebug("Tipo construido: " + tipo.toString());
+
     RESULT = tipo;
 :}
 | BOOLEAN
 {:
-    semanticErrorManager.semanticDebug("Tipo BOOLEAN");
+    semanticErrorManager.semanticInfo("Procesando tipo primitivo BOOLEAN.");
+    
     ScopeIF scope = scopeManager.getCurrentScope();
     TypeBoolean typeBoolean = (TypeBoolean) scopeManager.searchType("BOOLEAN");
 
     if (typeBoolean == null) {
-        semanticFatalError("Tipo BOOLEAN no encontrado en tabla de tipos.", 0, 0);
+        semanticFatalError("Tipo BOOLEAN no encontrado en la tabla de tipos.", 0, 0);
     }
 
     Tipo tipo = new Tipo();
     tipo.setType(typeBoolean);
+
+    semanticErrorManager.semanticDebug("Tipo construido: " + tipo.toString());
+
     RESULT = tipo;
 :}
 | IDENTIFICADOR:id
 {:
-    semanticErrorManager.semanticDebug("Tipo definido por el usuario: " + id.getLexema());
+    String nombreTipo = id.getLexema();
+    semanticErrorManager.semanticInfo("Procesando tipo definido por el usuario: " + nombreTipo);
+    
     ScopeIF scope = scopeManager.getCurrentScope();
-    TypeIF tipoUsuario = scope.getTypeTable().getType(id.getLexema());
+    TypeIF tipoUsuario = scope.getTypeTable().getType(nombreTipo);
 
     if (tipoUsuario == null) {
-        semanticFatalError("Tipo '" + id.getLexema() + "' no declarado.", id.getLine(), id.getColumn());
+        semanticFatalError("Tipo '" + nombreTipo + "' no declarado en el ámbito actual.", id.getLine(), id.getColumn());
     }
 
     Tipo tipo = new Tipo();
     tipo.setType(tipoUsuario);
+
+    semanticErrorManager.semanticDebug("Tipo usuario vinculado: " + tipoUsuario.getName());
+    semanticErrorManager.semanticDebug("Tipo construido: " + tipo.toString());
+
     RESULT = tipo;
 :};
-
-
 
 //declaración subprograma
 declSubprogramas ::= declSubprograma:ds
 {:
+    semanticErrorManager.semanticInfo("Procesando primer subprograma.");
+
     DeclSubprogramas declSubprogramas = new DeclSubprogramas();
-    declSubprogramas.addSubprograma((DeclSubprograma)ds);
+    declSubprogramas.addSubprograma((DeclSubprograma) ds);
+
+    semanticErrorManager.semanticDebug("Subprograma añadido: " + ds.toString());
+    semanticErrorManager.semanticDebug("DeclSubprogramas generado: " + declSubprogramas.toString());
+
     RESULT = declSubprogramas;
 :}
 | declSubprogramas:dss declSubprograma:ds
 {:
-    dss.addSubprograma((DeclSubprograma)ds);
+    semanticErrorManager.semanticInfo("Procesando subprograma adicional.");
+
+    dss.addSubprograma((DeclSubprograma) ds);
+
+    semanticErrorManager.semanticDebug("Subprograma añadido: " + ds.toString());
+    semanticErrorManager.semanticDebug("DeclSubprogramas actualizado: " + dss.toString());
+
     RESULT = dss;
 :};
 
-
 declSubprograma ::= declFunction:df
 {:
+    semanticErrorManager.semanticInfo("Procesando subprograma tipo FUNCIÓN.");
+
     DeclSubprograma declSubprograma = new DeclSubprograma();
-    declSubprograma.setFunction((DeclFunction)df);
+    declSubprograma.setFunction((DeclFunction) df);
+
+    semanticErrorManager.semanticDebug("Función añadida al DeclSubprograma: " + df.toString());
+
     RESULT = declSubprograma;
 :}
 | declProcedimiento:dp
 {:
+    semanticErrorManager.semanticInfo("Procesando subprograma tipo PROCEDIMIENTO.");
+
     DeclSubprograma declSubprograma = new DeclSubprograma();
-    declSubprograma.setProcedimiento((DeclProcedimiento)dp);
+    declSubprograma.setProcedimiento((DeclProcedimiento) dp);
+
+    semanticErrorManager.semanticDebug("Procedimiento añadido al DeclSubprograma: " + dp.toString());
+
     RESULT = declSubprograma;
 :};
-
-
 
 //declaración función
 declFunction ::= FUNCTION IDENTIFICADOR:id PARENTESISAP declParametros:dp PARENTESISCIERRE RETURN tipoRetorno:tr IS declaracionesFunction:df cuerpoFunction:cf
 {:
+    semanticErrorManager.semanticInfo("Procesando declaración de función con parámetros: " + id.getLexema());
+
     DeclFunction declFunction = new DeclFunction();
     declFunction.setNombre(id.getLexema());
-    declFunction.setParametros((DeclParametros)dp);
-    declFunction.setTipoRetorno((TipoRetorno)tr);
-    declFunction.setDeclaraciones((DeclaracionesFunction)df);
-    declFunction.setCuerpo((CuerpoFunction)cf);
+    declFunction.setParametros((DeclParametros) dp);
+    declFunction.setTipoRetorno((TipoRetorno) tr);
+    declFunction.setDeclaraciones((DeclaracionesFunction) df);
+    declFunction.setCuerpo((CuerpoFunction) cf);
+
+    semanticErrorManager.semanticDebug("Función declarada: " + declFunction.toString());
+
     RESULT = declFunction;
 :}
 | FUNCTION IDENTIFICADOR:id PARENTESISAP PARENTESISCIERRE RETURN tipoRetorno:tr IS declaracionesFunction:df cuerpoFunction:cf
 {:
+    semanticErrorManager.semanticInfo("Procesando declaración de función sin parámetros: " + id.getLexema());
+
     DeclFunction declFunction = new DeclFunction();
     declFunction.setNombre(id.getLexema());
-    declFunction.setParametros(null); // Sin parámetros
-    declFunction.setTipoRetorno((TipoRetorno)tr);
-    declFunction.setDeclaraciones((DeclaracionesFunction)df);
-    declFunction.setCuerpo((CuerpoFunction)cf);
+    declFunction.setParametros(null);
+    declFunction.setTipoRetorno((TipoRetorno) tr);
+    declFunction.setDeclaraciones((DeclaracionesFunction) df);
+    declFunction.setCuerpo((CuerpoFunction) cf);
+
+    semanticErrorManager.semanticDebug("Función declarada: " + declFunction.toString());
+
     RESULT = declFunction;
 :};
-
-
 				
 declParametros ::= declParametro:dp DELIMPUNTOCOMA declParametros:dps
 {:
+    semanticErrorManager.semanticInfo("Procesando parámetro seguido de más parámetros.");
+
     DeclParametros declParametros = new DeclParametros();
-    declParametros.addParametro((DeclParametro)dp);
-    declParametros.getParametros().addAll(((DeclParametros)dps).getParametros());
+    declParametros.addParametro((DeclParametro) dp);
+    declParametros.getParametros().addAll(((DeclParametros) dps).getParametros());
+
+    semanticErrorManager.semanticDebug("Parámetro añadido: " + dp.toString());
+    semanticErrorManager.semanticDebug("DeclParametros actualizado: " + declParametros.toString());
+
     RESULT = declParametros;
 :}
 | declParametro:dp
 {:
+    semanticErrorManager.semanticInfo("Procesando único parámetro.");
+
     DeclParametros declParametros = new DeclParametros();
-    declParametros.addParametro((DeclParametro)dp);
+    declParametros.addParametro((DeclParametro) dp);
+
+    semanticErrorManager.semanticDebug("Parámetro añadido: " + dp.toString());
+    semanticErrorManager.semanticDebug("DeclParametros generado: " + declParametros.toString());
+
     RESULT = declParametros;
 :};
 
-
 declParametro ::= listaParametros:lp DELIMTIPO tipo:t
 {:
+    semanticErrorManager.semanticInfo("Procesando parámetro(s) tipo IN.");
+
     DeclParametro declParametro = new DeclParametro();
-    declParametro.setListaParametros((ListaParametros)lp);
-    declParametro.setTipo((Tipo)t);
-    declParametro.setSalida(false); // No es OUT
+    declParametro.setListaParametros((ListaParametros) lp);
+    declParametro.setTipo((Tipo) t);
+    declParametro.setSalida(false);
+
+    semanticErrorManager.semanticDebug("Parámetro IN: " + declParametro.toString());
+
     RESULT = declParametro;
 :}
 | listaParametros:lp DELIMTIPO OUT tipo:t
 {:
+    semanticErrorManager.semanticInfo("Procesando parámetro(s) tipo OUT.");
+
     DeclParametro declParametro = new DeclParametro();
-    declParametro.setListaParametros((ListaParametros)lp);
-    declParametro.setTipo((Tipo)t);
-    declParametro.setSalida(true); // Es OUT
+    declParametro.setListaParametros((ListaParametros) lp);
+    declParametro.setTipo((Tipo) t);
+    declParametro.setSalida(true);
+
+    semanticErrorManager.semanticDebug("Parámetro OUT: " + declParametro.toString());
+
     RESULT = declParametro;
 :};
-
 	
 listaParametros ::= IDENTIFICADOR:id DELIMLISTA listaParametros:lps
 {:
-    ListaParametros listaParametros = (ListaParametros)lps;
+    semanticErrorManager.semanticInfo("Añadiendo identificador a lista de parámetros: " + id.getLexema());
+
+    ListaParametros listaParametros = (ListaParametros) lps;
     listaParametros.addIdentificador(id.getLexema());
+
+    semanticErrorManager.semanticDebug("ListaParametros actualizada: " + listaParametros.toString());
+
     RESULT = listaParametros;
 :}
 | IDENTIFICADOR:id
 {:
+    semanticErrorManager.semanticInfo("Creando nueva lista de parámetros con: " + id.getLexema());
+
     ListaParametros listaParametros = new ListaParametros();
     listaParametros.addIdentificador(id.getLexema());
+
+    semanticErrorManager.semanticDebug("ListaParametros creada: " + listaParametros.toString());
+
     RESULT = listaParametros;
 :};
 
-
-
 tipoRetorno ::= INTEGER
 {:
-    semanticErrorManager.semanticDebug("Tipo de retorno INTEGER");
+    semanticErrorManager.semanticInfo("Procesando tipo de retorno INTEGER.");
+    
     ScopeIF scope = scopeManager.getCurrentScope();
     TypeInteger typeInteger = (TypeInteger) scopeManager.searchType("INTEGER");
 
@@ -644,11 +833,15 @@ tipoRetorno ::= INTEGER
 
     TipoRetorno tipoRetorno = new TipoRetorno();
     tipoRetorno.setType(typeInteger);
+
+    semanticErrorManager.semanticDebug("TipoRetorno construido: " + tipoRetorno.toString());
+
     RESULT = tipoRetorno;
 :}
 | BOOLEAN
 {:
-    semanticErrorManager.semanticDebug("Tipo de retorno BOOLEAN");
+    semanticErrorManager.semanticInfo("Procesando tipo de retorno BOOLEAN.");
+    
     ScopeIF scope = scopeManager.getCurrentScope();
     TypeBoolean typeBoolean = (TypeBoolean) scopeManager.searchType("BOOLEAN");
 
@@ -658,352 +851,469 @@ tipoRetorno ::= INTEGER
 
     TipoRetorno tipoRetorno = new TipoRetorno();
     tipoRetorno.setType(typeBoolean);
+
+    semanticErrorManager.semanticDebug("TipoRetorno construido: " + tipoRetorno.toString());
+
     RESULT = tipoRetorno;
 :};
 
-
-
 declaracionesFunction ::= grupoDeclaraciones1:gd1
 {:
+    semanticErrorManager.semanticInfo("Procesando declaraciones locales de la función.");
+
     DeclaracionesFunction declaracionesFunction = new DeclaracionesFunction();
-    declaracionesFunction.setGrupoDeclaraciones1((GrupoDeclaraciones1)gd1);
+    declaracionesFunction.setGrupoDeclaraciones1((GrupoDeclaraciones1) gd1);
+
+    semanticErrorManager.semanticDebug("DeclaracionesFunction generadas: " + declaracionesFunction.toString());
+
     RESULT = declaracionesFunction;
 :};
-
-
                     
 cuerpoFunction ::= BEGIN sentencias:s END IDENTIFICADOR:id DELIMPUNTOCOMA
 {:
+    semanticErrorManager.semanticInfo("Procesando cuerpo de función: END " + ((Token)id).getLexema());
+
     CuerpoFunction cuerpoFunction = new CuerpoFunction();
-    cuerpoFunction.setSentencias((Sentencias)s);
+    cuerpoFunction.setSentencias((Sentencias) s);
+
+    semanticErrorManager.semanticDebug("CuerpoFunction generado: " + cuerpoFunction.toString());
+
     RESULT = cuerpoFunction;
-:};
-
-
-                                     
-
+:};                                
 
 //declaración procedimiento
 declProcedimiento ::= PROCEDURE IDENTIFICADOR:id PARENTESISAP declParametros:dp PARENTESISCIERRE IS declaracionesFunction:df cuerpo:c
 {:
+    semanticErrorManager.semanticInfo("Procesando declaración de procedimiento con parámetros: " + id.getLexema());
+
     DeclProcedimiento declProcedimiento = new DeclProcedimiento();
     declProcedimiento.setNombre(id.getLexema());
-    declProcedimiento.setParametros((DeclParametros)dp);
-    declProcedimiento.setDeclaraciones((DeclaracionesFunction)df);
-    declProcedimiento.setCuerpo((Cuerpo)c);
+    declProcedimiento.setParametros((DeclParametros) dp);
+    declProcedimiento.setDeclaraciones((DeclaracionesFunction) df);
+    declProcedimiento.setCuerpo((Cuerpo) c);
+
+    semanticErrorManager.semanticDebug("Procedimiento declarado: " + declProcedimiento.toString());
+
     RESULT = declProcedimiento;
 :}
 | PROCEDURE IDENTIFICADOR:id PARENTESISAP PARENTESISCIERRE IS declaracionesFunction:df cuerpo:c
 {:
+    semanticErrorManager.semanticInfo("Procesando declaración de procedimiento sin parámetros: " + id.getLexema());
+
     DeclProcedimiento declProcedimiento = new DeclProcedimiento();
     declProcedimiento.setNombre(id.getLexema());
-    declProcedimiento.setParametros(null); // Sin parámetros
-    declProcedimiento.setDeclaraciones((DeclaracionesFunction)df);
-    declProcedimiento.setCuerpo((Cuerpo)c);
+    declProcedimiento.setParametros(null);
+    declProcedimiento.setDeclaraciones((DeclaracionesFunction) df);
+    declProcedimiento.setCuerpo((Cuerpo) c);
+
+    semanticErrorManager.semanticDebug("Procedimiento declarado: " + declProcedimiento.toString());
+
     RESULT = declProcedimiento;
-:};
-
-       
-
+:};   
 
 //Cuerpo del procedimiento   
 cuerpo ::= BEGIN sentencias:s END IDENTIFICADOR:id DELIMPUNTOCOMA
 {:
+    semanticErrorManager.semanticInfo("Procesando cuerpo de procedimiento con sentencias: END " + ((Token)id).getLexema());
+
     Cuerpo cuerpo = new Cuerpo();
-    cuerpo.setSentencias((Sentencias)s);
+    cuerpo.setSentencias((Sentencias) s);
+
+    semanticErrorManager.semanticDebug("Cuerpo generado con sentencias: " + cuerpo.toString());
+
     RESULT = cuerpo;
 :}
 | BEGIN END IDENTIFICADOR:id DELIMPUNTOCOMA
 {:
+    semanticErrorManager.semanticInfo("Procesando cuerpo vacío de procedimiento: END " + ((Token)id).getLexema());
+
     Cuerpo cuerpo = new Cuerpo();
-    cuerpo.setSentencias(null); // Cuerpo vacío
+    cuerpo.setSentencias(null);
+
+    IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scopeManager.getCurrentScope());
+    iCb.addQuadruple(Nemonic.RET);
+
+    cuerpo.setIntermediateCode(iCb.create());
+
+    semanticErrorManager.semanticDebug("Cuerpo generado sin sentencias (vacío): " + cuerpo.toString());
+
     RESULT = cuerpo;
-:};
-
-
-            
-           
-                        
+:};        
+                             
 //sentencias                        
 sentencias ::= sentencia:s sentencias:ss
 {:
+    semanticErrorManager.semanticInfo("Añadiendo sentencia a la lista de sentencias.");
+
     Sentencias sentencias = new Sentencias();
-    sentencias.addSentencia((Sentencia)s);
-    sentencias.getSentencias().addAll(((Sentencias)ss).getSentencias());
+    sentencias.addSentencia((Sentencia) s);
+    sentencias.getSentencias().addAll(((Sentencias) ss).getSentencias());
+
+    semanticErrorManager.semanticDebug("Sentencia añadida: " + s.toString());
+    semanticErrorManager.semanticDebug("Lista de sentencias actualizada: " + sentencias.toString());
+
     RESULT = sentencias;
 :}
 | sentencia:s
 {:
+    semanticErrorManager.semanticInfo("Creando lista de sentencias con una única sentencia.");
+
     Sentencias sentencias = new Sentencias();
-    sentencias.addSentencia((Sentencia)s);
+    sentencias.addSentencia((Sentencia) s);
+
+    semanticErrorManager.semanticDebug("Sentencia única: " + s.toString());
+    semanticErrorManager.semanticDebug("Lista de sentencias creada: " + sentencias.toString());
+
     RESULT = sentencias;
 :};
 
-
 sentencia ::= sentenciaPutLine:sp
 {:
+    semanticErrorManager.semanticInfo("Procesando sentencia Put_line.");
+
     Sentencia sentencia = new Sentencia();
-    sentencia.setSentenciaPutLine((SentenciaPutLine)sp);
+    sentencia.setSentenciaPutLine((SentenciaPutLine) sp);
+
+    semanticErrorManager.semanticDebug("Sentencia creada: " + sentencia.toString());
+
     RESULT = sentencia;
 :}
 | sentenciaAsignacion:sa
 {:
+    semanticErrorManager.semanticInfo("Procesando sentencia de asignación.");
+
     Sentencia sentencia = new Sentencia();
-    sentencia.setSentenciaAsignacion((SentenciaAsignacion)sa);
+    sentencia.setSentenciaAsignacion((SentenciaAsignacion) sa);
+
+    semanticErrorManager.semanticDebug("Sentencia creada: " + sentencia.toString());
+
     RESULT = sentencia;
 :}
 | sentenciaIf:si
 {:
+    semanticErrorManager.semanticInfo("Procesando sentencia IF.");
+
     Sentencia sentencia = new Sentencia();
-    sentencia.setSentenciaIf((SentenciaIf)si);
+    sentencia.setSentenciaIf((SentenciaIf) si);
+
+    semanticErrorManager.semanticDebug("Sentencia creada: " + sentencia.toString());
+
     RESULT = sentencia;
 :}
 | sentenciaWhile:sw
 {:
+    semanticErrorManager.semanticInfo("Procesando sentencia WHILE.");
+
     Sentencia sentencia = new Sentencia();
-    sentencia.setSentenciaWhile((SentenciaWhile)sw);
+    sentencia.setSentenciaWhile((SentenciaWhile) sw);
+
+    semanticErrorManager.semanticDebug("Sentencia creada: " + sentencia.toString());
+
     RESULT = sentencia;
 :}
 | sentenciaReturn:sr
 {:
+    semanticErrorManager.semanticInfo("Procesando sentencia RETURN.");
+
     Sentencia sentencia = new Sentencia();
-    sentencia.setSentenciaReturn((SentenciaReturn)sr);
+    sentencia.setSentenciaReturn((SentenciaReturn) sr);
+
+    semanticErrorManager.semanticDebug("Sentencia creada: " + sentencia.toString());
+
     RESULT = sentencia;
 :}
 | sentenciaProcedimiento:spc
 {:
+    semanticErrorManager.semanticInfo("Procesando llamada a procedimiento.");
+
     Sentencia sentencia = new Sentencia();
-    sentencia.setSentenciaProcedimiento((SentenciaProcedimiento)spc);
+    sentencia.setSentenciaProcedimiento((SentenciaProcedimiento) spc);
+
+    semanticErrorManager.semanticDebug("Sentencia creada: " + sentencia.toString());
+
     RESULT = sentencia;
 :};
-
        
 //sentencia asignación            
 sentenciaAsignacion ::= ref:r ASIGNACION expresion:e DELIMPUNTOCOMA
 {:
-    semanticErrorManager.semanticDebug("Procesando asignación");
+    semanticErrorManager.semanticInfo("Procesando sentencia de asignación.");
 
-    // Validar que los tipos coincidan
-    if (!((Ref)r).getType().equals(((Expresion)e).getType())) {
-        semanticFatalError("Error de tipos en asignación.", 0, 0);
+    Ref referencia = (Ref) r;
+    Expresion expresion = (Expresion) e;
+
+    // Validación de tipos
+    if (!referencia.getType().equals(expresion.getType())) {
+        semanticFatalError("Error de tipos en asignación. Se esperaba tipo " +
+            referencia.getType().getName() + ", pero se obtuvo " +
+            expresion.getType().getName(), 0, 0);
     }
 
     SentenciaAsignacion sentenciaAsignacion = new SentenciaAsignacion();
-    sentenciaAsignacion.setRef((Ref)r);
-    sentenciaAsignacion.setExpresion((Expresion)e);
+    sentenciaAsignacion.setRef(referencia);
+    sentenciaAsignacion.setExpresion(expresion);
+
+    semanticErrorManager.semanticDebug("Asignación construida: " + sentenciaAsignacion.toString());
 
     RESULT = sentenciaAsignacion;
 :};
 
-
-
 ref ::= IDENTIFICADOR:id
 {:
-    semanticErrorManager.semanticDebug("Referencia simple a variable: " + id.getLexema());
+    String nombre = id.getLexema();
+    semanticErrorManager.semanticInfo("Procesando referencia simple a variable: " + nombre);
 
     ScopeIF scope = scopeManager.getCurrentScope();
-    SymbolBase simbolo = (SymbolBase) scopeManager.searchSymbol(id.getLexema());
+    SymbolBase simbolo = (SymbolBase) scopeManager.searchSymbol(nombre);
 
     if (simbolo == null) {
-        semanticFatalError("Variable no declarada: " + id.getLexema(), id.getLine(), id.getColumn());
+        semanticFatalError("Variable no declarada: " + nombre, id.getLine(), id.getColumn());
     }
 
     if (!(simbolo instanceof SymbolVariable)) {
-        semanticFatalError("El identificador '" + id.getLexema() + "' no es una variable.", id.getLine(), id.getColumn());
+        semanticFatalError("El identificador '" + nombre + "' no es una variable.", id.getLine(), id.getColumn());
     }
 
     Ref ref = new Ref();
     ref.setType(simbolo.getType());
+
+    semanticErrorManager.semanticDebug("Referencia creada: nombre=" + nombre + ", tipo=" + simbolo.getType().getName());
+    semanticErrorManager.semanticDebug("Objeto Ref: " + ref.toString());
+
     RESULT = ref;
 :}
 | expresionAccesoRegistro:ear
 {:
-    semanticErrorManager.semanticDebug("Referencia a acceso a registro");
+    semanticErrorManager.semanticInfo("Procesando referencia a campo de registro.");
 
     Ref ref = new Ref();
-    ref.setType(((ExpresionAccesoRegistro)ear).getType());
+    ref.setType(((ExpresionAccesoRegistro) ear).getType());
+
+    semanticErrorManager.semanticDebug("Referencia a campo de registro con tipo: " + ref.getType().getName());
+    semanticErrorManager.semanticDebug("Objeto Ref: " + ref.toString());
+
     RESULT = ref;
 :};
-
-
 
 //sentencia if
 sentenciaIf ::= IF expresion:e THEN sentencias:st END IF DELIMPUNTOCOMA
 {:
-    semanticErrorManager.semanticDebug("Procesando sentencia IF (sin ELSE)");
+    semanticErrorManager.semanticInfo("Procesando sentencia IF (sin ELSE)");
+
     ScopeIF scope = scopeManager.getCurrentScope();
     TypeBoolean typeBoolean = (TypeBoolean) scopeManager.searchType("BOOLEAN");
 
-    // Validar que la condición sea BOOLEAN
-    if (!((Expresion)e).getType().equals(typeBoolean)) {
+    Expresion condicion = (Expresion)e;
+    Sentencias cuerpoThen = (Sentencias)st;
+
+    // Validación de tipo
+    if (!condicion.getType().equals(typeBoolean)) {
         semanticFatalError("La condición del IF debe ser de tipo BOOLEAN.", 0, 0);
     }
 
     SentenciaIf sentenciaIf = new SentenciaIf();
-    sentenciaIf.setCondicion((Expresion)e);
-    sentenciaIf.setCuerpoThen((Sentencias)st);
+    sentenciaIf.setCondicion(condicion);
+    sentenciaIf.setCuerpoThen(cuerpoThen);
 
-    // Código intermedio
+    // Generación de código intermedio
     IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scope);
     LabelFactory lf = new LabelFactory();
     LabelIF etiquetaFinIf = lf.create();
 
-    iCb.addQuadruples(((Expresion)e).getIntermediateCode());
-    iCb.addQuadruple(Nemonic.BRF, ((Expresion)e).getTemporal(), etiquetaFinIf);
-    iCb.addQuadruples(((Sentencias)st).getIntermediateCode());
+    semanticErrorManager.semanticDebug("Etiqueta FIN_IF: " + etiquetaFinIf.getName());
+
+    iCb.addQuadruples(condicion.getIntermediateCode());
+    iCb.addQuadruple(Nemonic.BRF, condicion.getTemporal(), etiquetaFinIf);
+    iCb.addQuadruples(cuerpoThen.getIntermediateCode());
     iCb.addQuadruple(Nemonic.INL, etiquetaFinIf);
 
     sentenciaIf.setIntermediateCode(iCb.create());
+
+    semanticErrorManager.semanticDebug("Código intermedio generado para IF sin ELSE: " + sentenciaIf.getIntermediateCode());
 
     RESULT = sentenciaIf;
 :}
 | IF expresion:e THEN sentencias:st ELSE sentencias:se END IF DELIMPUNTOCOMA
 {:
-    semanticErrorManager.semanticDebug("Procesando sentencia IF (con ELSE)");
+    semanticErrorManager.semanticInfo("Procesando sentencia IF (con ELSE)");
+
     ScopeIF scope = scopeManager.getCurrentScope();
     TypeBoolean typeBoolean = (TypeBoolean) scopeManager.searchType("BOOLEAN");
 
-    if (!((Expresion)e).getType().equals(typeBoolean)) {
+    Expresion condicion = (Expresion)e;
+    Sentencias cuerpoThen = (Sentencias)st;
+    Sentencias cuerpoElse = (Sentencias)se;
+
+    // Validación de tipo
+    if (!condicion.getType().equals(typeBoolean)) {
         semanticFatalError("La condición del IF debe ser de tipo BOOLEAN.", 0, 0);
     }
 
     SentenciaIf sentenciaIf = new SentenciaIf();
-    sentenciaIf.setCondicion((Expresion)e);
-    sentenciaIf.setCuerpoThen((Sentencias)st);
-    sentenciaIf.setCuerpoElse((Sentencias)se);
+    sentenciaIf.setCondicion(condicion);
+    sentenciaIf.setCuerpoThen(cuerpoThen);
+    sentenciaIf.setCuerpoElse(cuerpoElse);
 
-    // Código intermedio
+    // Generación de código intermedio
     IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scope);
     LabelFactory lf = new LabelFactory();
     LabelIF etiquetaElse = lf.create();
     LabelIF etiquetaFinIf = lf.create();
 
-    iCb.addQuadruples(((Expresion)e).getIntermediateCode());
-    iCb.addQuadruple(Nemonic.BRF, ((Expresion)e).getTemporal(), etiquetaElse);
-    iCb.addQuadruples(((Sentencias)st).getIntermediateCode());
+    semanticErrorManager.semanticDebug("Etiqueta ELSE: " + etiquetaElse.getName());
+    semanticErrorManager.semanticDebug("Etiqueta FIN_IF: " + etiquetaFinIf.getName());
+
+    iCb.addQuadruples(condicion.getIntermediateCode());
+    iCb.addQuadruple(Nemonic.BRF, condicion.getTemporal(), etiquetaElse);
+    iCb.addQuadruples(cuerpoThen.getIntermediateCode());
     iCb.addQuadruple(Nemonic.BR, etiquetaFinIf);
     iCb.addQuadruple(Nemonic.INL, etiquetaElse);
-    iCb.addQuadruples(((Sentencias)se).getIntermediateCode());
+    iCb.addQuadruples(cuerpoElse.getIntermediateCode());
     iCb.addQuadruple(Nemonic.INL, etiquetaFinIf);
 
     sentenciaIf.setIntermediateCode(iCb.create());
 
+    semanticErrorManager.semanticDebug("Código intermedio generado para IF con ELSE: " + sentenciaIf.getIntermediateCode());
+
     RESULT = sentenciaIf;
 :};
-
-
 
 //sentencia while
 sentenciaWhile ::= WHILE expresion:e LOOP sentencias:st END LOOP DELIMPUNTOCOMA
 {:
-    semanticErrorManager.semanticDebug("Procesando sentencia WHILE");
+    semanticErrorManager.semanticInfo("Procesando sentencia WHILE");
+
     ScopeIF scope = scopeManager.getCurrentScope();
     TypeBoolean typeBoolean = (TypeBoolean) scopeManager.searchType("BOOLEAN");
+    Expresion condicion = (Expresion)e;
 
-    if (!((Expresion)e).getType().equals(typeBoolean)) {
+    if (!condicion.getType().equals(typeBoolean)) {
         semanticFatalError("La condición del WHILE debe ser de tipo BOOLEAN.", 0, 0);
     }
 
     SentenciaWhile sentenciaWhile = new SentenciaWhile();
-    sentenciaWhile.setCondicion((Expresion)e);
+    sentenciaWhile.setCondicion(condicion);
     sentenciaWhile.setCuerpo((Sentencias)st);
 
-    // Código intermedio
+    // Generación de código intermedio
     IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scope);
     LabelFactory lf = new LabelFactory();
     LabelIF etiquetaInicioWhile = lf.create();
     LabelIF etiquetaFinWhile = lf.create();
 
+    semanticErrorManager.semanticDebug("Etiqueta INICIO_WHILE: " + etiquetaInicioWhile.getName());
+    semanticErrorManager.semanticDebug("Etiqueta FIN_WHILE: " + etiquetaFinWhile.getName());
+
     iCb.addQuadruple(Nemonic.INL, etiquetaInicioWhile);
-    iCb.addQuadruples(((Expresion)e).getIntermediateCode());
-    iCb.addQuadruple(Nemonic.BRF, ((Expresion)e).getTemporal(), etiquetaFinWhile);
+    iCb.addQuadruples(condicion.getIntermediateCode());
+    iCb.addQuadruple(Nemonic.BRF, condicion.getTemporal(), etiquetaFinWhile);
     iCb.addQuadruples(((Sentencias)st).getIntermediateCode());
     iCb.addQuadruple(Nemonic.BR, etiquetaInicioWhile);
     iCb.addQuadruple(Nemonic.INL, etiquetaFinWhile);
 
     sentenciaWhile.setIntermediateCode(iCb.create());
 
+    semanticErrorManager.semanticDebug("Código intermedio generado para WHILE: " + sentenciaWhile.getIntermediateCode());
+
     RESULT = sentenciaWhile;
 :};
-
-
-
 
 //sentencia Put_line
 sentenciaPutLine ::= PUTLINE PARENTESISAP parametro:p PARENTESISCIERRE DELIMPUNTOCOMA
 {:
-    semanticErrorManager.semanticDebug("Procesando sentencia PUT_LINE");
+    semanticErrorManager.semanticInfo("Procesando sentencia PUT_LINE");
+
     ScopeIF scope = scopeManager.getCurrentScope();
-    
     SentenciaPutLine sentenciaPutLine = new SentenciaPutLine();
     sentenciaPutLine.setParametro((Parametro)p);
 
-    // Código intermedio
     IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scope);
 
     if (((Parametro)p).esCadena()) {
-        // Escribir una cadena de caracteres
-        iCb.addQuadruple(Nemonic.WRSTR, ((Parametro)p).getCadena());
+        String literal = ((Parametro)p).getCadena();
+        semanticErrorManager.semanticDebug("Parametro cadena detectado: \"" + literal + "\"");
+
+        iCb.addQuadruple(Nemonic.WRSTR, literal);
     } else {
-        // Escribir una expresión (entero o booleano)
-        iCb.addQuadruples(((Parametro)p).getExpresion().getIntermediateCode());
-        iCb.addQuadruple(Nemonic.WRINT, ((Parametro)p).getExpresion().getTemporal());
+        Expresion expr = ((Parametro)p).getExpresion();
+        semanticErrorManager.semanticDebug("Parametro expresión de tipo: " + expr.getType().getName());
+
+        iCb.addQuadruples(expr.getIntermediateCode());
+        iCb.addQuadruple(Nemonic.WRINT, expr.getTemporal());
     }
 
     sentenciaPutLine.setIntermediateCode(iCb.create());
 
+    semanticErrorManager.semanticDebug("Código intermedio generado para PUT_LINE: " + sentenciaPutLine.getIntermediateCode());
+
     RESULT = sentenciaPutLine;
 :};
-
 
 //parametro
 parametro ::= expresion:e
 {:
-    semanticErrorManager.semanticDebug("Procesando parámetro: expresión");
+    semanticErrorManager.semanticInfo("Procesando parámetro tipo expresión.");
+
     Parametro parametro = new Parametro((Expresion)e);
+
+    semanticErrorManager.semanticDebug("Expresión de tipo: " + ((Expresion)e).getType().getName());
+    semanticErrorManager.semanticDebug("Temporal asociado: " + ((Expresion)e).getTemporal());
+    semanticErrorManager.semanticDebug("Objeto Parametro generado: " + parametro.toString());
+
     RESULT = parametro;
 :}
 | CADENACARACTERES:cad
 {:
-    semanticErrorManager.semanticDebug("Procesando parámetro: cadena de caracteres");
+    semanticErrorManager.semanticInfo("Procesando parámetro tipo cadena de caracteres.");
+
     Parametro parametro = new Parametro(cad.getLexema());
+
+    semanticErrorManager.semanticDebug("Texto de la cadena: \"" + cad.getLexema() + "\"");
+    semanticErrorManager.semanticDebug("Objeto Parametro generado: " + parametro.toString());
+
     RESULT = parametro;
 :};
-
-
 
 //sentencia Return 
 sentenciaReturn ::= RETURN expresion:e DELIMPUNTOCOMA
 {:
-    semanticErrorManager.semanticDebug("Procesando sentencia RETURN");
+    semanticErrorManager.semanticInfo("Procesando sentencia RETURN");
+
     ScopeIF scope = scopeManager.getCurrentScope();
-    
+    Expresion expr = (Expresion)e;
+
     SentenciaReturn sentenciaReturn = new SentenciaReturn();
-    sentenciaReturn.setExpresion((Expresion)e);
+    sentenciaReturn.setExpresion(expr);
 
-    /*TypeIF tipoRetornoFuncion = obtenerTipoDeLaFuncionActual();
-    if (!((Expresion)e).getType().equals(tipoRetornoFuncion)) {
+    // Validación opcional del tipo de retorno de función
+    /*
+    TypeIF tipoRetornoFuncion = obtenerTipoDeLaFuncionActual(); // TODO
+    if (!expr.getType().equals(tipoRetornoFuncion)) {
          semanticFatalError("Tipo de retorno incorrecto en RETURN.", 0, 0);
-    }*/
+    }
+    */
 
-    // Código intermedio
+    // Generación de código intermedio
     IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scope);
-    iCb.addQuadruples(((Expresion)e).getIntermediateCode());
-    iCb.addQuadruple(Nemonic.RET, ((Expresion)e).getTemporal());
+    iCb.addQuadruples(expr.getIntermediateCode());
+    iCb.addQuadruple(Nemonic.RET, expr.getTemporal());
 
     sentenciaReturn.setIntermediateCode(iCb.create());
+
+    semanticErrorManager.semanticDebug("Código intermedio RETURN generado con temporal: " + expr.getTemporal());
+    semanticErrorManager.semanticDebug("Objeto SentenciaReturn generado: " + sentenciaReturn.toString());
 
     RESULT = sentenciaReturn;
 :};
 
-
 //sentencia llamada procedimiento
 sentenciaProcedimiento ::= IDENTIFICADOR:id PARENTESISAP listaParametrosInvocacion:lpi PARENTESISCIERRE DELIMPUNTOCOMA
 {:
-    semanticErrorManager.semanticDebug("Procesando llamada a procedimiento con parámetros");
+    semanticErrorManager.semanticInfo("Procesando llamada a procedimiento con parámetros: " + id.getLexema());
+
     ScopeIF scope = scopeManager.getCurrentScope();
-    
     SymbolBase simbolo = (SymbolBase) scopeManager.searchSymbol(id.getLexema());
+
     if (simbolo == null) {
         semanticFatalError("Procedimiento no declarado: " + id.getLexema(), id.getLine(), id.getColumn());
     }
@@ -1012,43 +1322,52 @@ sentenciaProcedimiento ::= IDENTIFICADOR:id PARENTESISAP listaParametrosInvocaci
     }
 
     SymbolProcedure procedimiento = (SymbolProcedure) simbolo;
-
-    // Validar número de parámetros
     List<SymbolParameter> parametrosFormales = procedimiento.getParameterList();
     List<Expresion> parametrosActuales = ((ListaParametrosInvocacion)lpi).getParametros();
 
+    // Validar número de parámetros
     if (parametrosFormales.size() != parametrosActuales.size()) {
         semanticFatalError("Número incorrecto de parámetros en llamada a procedimiento '" + id.getLexema() + "'.", id.getLine(), id.getColumn());
     }
 
-    // Validar tipo de cada parámetro
+    // Validar tipo de parámetros
     for (int i = 0; i < parametrosFormales.size(); i++) {
         TypeIF tipoFormal = parametrosFormales.get(i).getType();
         TypeIF tipoActual = parametrosActuales.get(i).getType();
+
         if (!tipoFormal.equals(tipoActual)) {
-            semanticFatalError("Tipo incorrecto en el parámetro " + (i+1) + " del procedimiento '" + id.getLexema() + "'.", id.getLine(), id.getColumn());
+            semanticFatalError("Tipo incorrecto en el parámetro " + (i + 1) + " de '" + id.getLexema() + "'. Esperado: " +
+                               tipoFormal.getName() + ", recibido: " + tipoActual.getName(), id.getLine(), id.getColumn());
         }
+
+        semanticErrorManager.semanticDebug("Parámetro " + (i + 1) + ": OK. Tipo=" + tipoActual.getName() +
+                                            ", Temporal=" + parametrosActuales.get(i).getTemporal());
     }
 
-    // Código intermedio
+    // Generación de código intermedio
     IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scope);
+
     for (Expresion parametro : parametrosActuales) {
         iCb.addQuadruples(parametro.getIntermediateCode());
         iCb.addQuadruple(Nemonic.PARAM, parametro.getTemporal());
     }
+
     iCb.addQuadruple(Nemonic.CALL, procedimiento);
 
     SentenciaProcedimiento sentenciaProcedimiento = new SentenciaProcedimiento();
     sentenciaProcedimiento.setIntermediateCode(iCb.create());
 
+    semanticErrorManager.semanticDebug("Llamada a procedimiento con parámetros generada correctamente: " + procedimiento.getName());
+
     RESULT = sentenciaProcedimiento;
 :}
 | IDENTIFICADOR:id PARENTESISAP PARENTESISCIERRE DELIMPUNTOCOMA
 {:
-    semanticErrorManager.semanticDebug("Procesando llamada a procedimiento sin parámetros");
+    semanticErrorManager.semanticInfo("Procesando llamada a procedimiento sin parámetros: " + id.getLexema());
+
     ScopeIF scope = scopeManager.getCurrentScope();
-    
     SymbolBase simbolo = (SymbolBase) scopeManager.searchSymbol(id.getLexema());
+
     if (simbolo == null) {
         semanticFatalError("Procedimiento no declarado: " + id.getLexema(), id.getLine(), id.getColumn());
     }
@@ -1058,7 +1377,6 @@ sentenciaProcedimiento ::= IDENTIFICADOR:id PARENTESISAP listaParametrosInvocaci
 
     SymbolProcedure procedimiento = (SymbolProcedure) simbolo;
 
-    // Validar que el procedimiento no recibe parámetros
     if (!procedimiento.getParameterList().isEmpty()) {
         semanticFatalError("El procedimiento '" + id.getLexema() + "' requiere parámetros.", id.getLine(), id.getColumn());
     }
@@ -1069,27 +1387,23 @@ sentenciaProcedimiento ::= IDENTIFICADOR:id PARENTESISAP listaParametrosInvocaci
     SentenciaProcedimiento sentenciaProcedimiento = new SentenciaProcedimiento();
     sentenciaProcedimiento.setIntermediateCode(iCb.create());
 
+    semanticErrorManager.semanticDebug("Llamada a procedimiento sin parámetros generada correctamente: " + procedimiento.getName());
+
     RESULT = sentenciaProcedimiento;
 :};
-
-
-
-
-
 
 //expresiones
 expresion ::= expresion:e1 operadorLogico:op expresion:e2
 {:
-    semanticErrorManager.semanticDebug("Expresión lógica");
+    semanticErrorManager.semanticInfo("Procesando expresión lógica.");
+
     ScopeIF scope = scopeManager.getCurrentScope();
     TypeBoolean typeBoolean = (TypeBoolean) scopeManager.searchType("BOOLEAN");
 
-    // Comprobar que ambos operandos son BOOLEAN
     if (!e1.getType().equals(typeBoolean) || !e2.getType().equals(typeBoolean)) {
         semanticFatalError("Error de tipos en operación lógica: se esperaban BOOLEAN.", 0, 0);
     }
 
-    // Crear nueva expresión
     Expresion expr = new Expresion();
     TemporalFactory tf = new TemporalFactory(scope);
     IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scope);
@@ -1098,25 +1412,26 @@ expresion ::= expresion:e1 operadorLogico:op expresion:e2
     TemporalIF t2 = e2.getTemporal();
     TemporalIF t = tf.create();
 
-    // Generar código intermedio
     iCb.addQuadruples(e1.getIntermediateCode());
     iCb.addQuadruples(e2.getIntermediateCode());
-    iCb.addQuadruple(Nemonic.AND, t, t1, t2); // Solo soportamos 'AND' ahora
+    iCb.addQuadruple(Nemonic.AND, t, t1, t2);  // Se asume operador 'AND'
 
     expr.setType(typeBoolean);
     expr.setTemporal(t);
     expr.setIntermediateCode(iCb.create());
 
+    semanticErrorManager.semanticDebug("Expresión lógica generada: temporal=" + t + ", tipo=BOOLEAN");
+
     RESULT = expr;
 :}
 | expresion:e1 operadorRelacional:op expresion:e2
 {:
-    semanticErrorManager.semanticDebug("Expresión relacional");
+    semanticErrorManager.semanticInfo("Procesando expresión relacional.");
+
     ScopeIF scope = scopeManager.getCurrentScope();
     TypeInteger typeInteger = (TypeInteger) scopeManager.searchType("INTEGER");
     TypeBoolean typeBoolean = (TypeBoolean) scopeManager.searchType("BOOLEAN");
 
-    // Comprobar que ambos operandos son INTEGER
     if (!e1.getType().equals(typeInteger) || !e2.getType().equals(typeInteger)) {
         semanticFatalError("Error de tipos en operación relacional: se esperaban INTEGER.", 0, 0);
     }
@@ -1131,21 +1446,23 @@ expresion ::= expresion:e1 operadorLogico:op expresion:e2
 
     iCb.addQuadruples(e1.getIntermediateCode());
     iCb.addQuadruples(e2.getIntermediateCode());
-    iCb.addQuadruple(Nemonic.GR, t, t1, t2); // Suponemos operador 'MAYOR' (>)
-    
+    iCb.addQuadruple(Nemonic.GR, t, t1, t2);  // Se asume 'MAYOR'
+
     expr.setType(typeBoolean);
     expr.setTemporal(t);
     expr.setIntermediateCode(iCb.create());
+
+    semanticErrorManager.semanticDebug("Expresión relacional generada: temporal=" + t + ", tipo=BOOLEAN");
 
     RESULT = expr;
 :}
 | expresion:e1 operadorAritmetico:op expresion:e2
 {:
-    semanticErrorManager.semanticDebug("Expresión aritmética");
+    semanticErrorManager.semanticInfo("Procesando expresión aritmética.");
+
     ScopeIF scope = scopeManager.getCurrentScope();
     TypeInteger typeInteger = (TypeInteger) scopeManager.searchType("INTEGER");
 
-    // Comprobar que ambos operandos son INTEGER
     if (!e1.getType().equals(typeInteger) || !e2.getType().equals(typeInteger)) {
         semanticFatalError("Error de tipos en operación aritmética: se esperaban INTEGER.", 0, 0);
     }
@@ -1160,34 +1477,40 @@ expresion ::= expresion:e1 operadorLogico:op expresion:e2
 
     iCb.addQuadruples(e1.getIntermediateCode());
     iCb.addQuadruples(e2.getIntermediateCode());
-    iCb.addQuadruple(Nemonic.SUB, t, t1, t2); // Suponemos operador 'MINUS' (-)
+    iCb.addQuadruple(Nemonic.SUB, t, t1, t2);  // Se asume 'MINUS'
 
     expr.setType(typeInteger);
     expr.setTemporal(t);
     expr.setIntermediateCode(iCb.create());
 
+    semanticErrorManager.semanticDebug("Expresión aritmética generada: temporal=" + t + ", tipo=INTEGER");
+
     RESULT = expr;
 :}
 | expresionAccesoRegistro:ear
 {:
-    semanticErrorManager.semanticDebug("Expresión acceso a registro");
+    semanticErrorManager.semanticInfo("Procesando expresión: acceso a campo de registro.");
+
     Expresion expr = new Expresion();
     expr.setType(((ExpresionAccesoRegistro)ear).getType());
     expr.setTemporal(((ExpresionAccesoRegistro)ear).getTemporal());
     expr.setIntermediateCode(((ExpresionAccesoRegistro)ear).getIntermediateCode());
+
+    semanticErrorManager.semanticDebug("Expresión acceso a registro: tipo=" + expr.getType().getName() + ", temporal=" + expr.getTemporal());
+
     RESULT = expr;
 :}
 | exprFuncion:ef
 {:
-    semanticErrorManager.semanticDebug("Expresión llamada a función");
+    semanticErrorManager.semanticInfo("Procesando expresión: llamada a función.");
+
     ScopeIF scope = scopeManager.getCurrentScope();
     TypeTableIF typeTable = scope.getTypeTable();
 
     Expresion expr = new Expresion();
-    
-    // Código intermedio
     TemporalFactory tf = new TemporalFactory(scope);
     IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scope);
+
     TemporalIF temp = tf.create();
 
     iCb.addQuadruples(((ExprFuncion)ef).getIntermediateCode());
@@ -1195,46 +1518,55 @@ expresion ::= expresion:e1 operadorLogico:op expresion:e2
 
     expr.setTemporal(temp);
     expr.setIntermediateCode(iCb.create());
-    
-    // Asumimos que todas las funciones devuelven ENTERO por defecto (ajustable)
-    expr.setType(typeTable.getType("INTEGER"));
+    expr.setType(typeTable.getType("INTEGER")); // Asumido
+
+    semanticErrorManager.semanticDebug("Expresión función generada: temporal=" + temp + ", tipo=INTEGER");
 
     RESULT = expr;
 :}
 | operando:o
 {:
-    semanticErrorManager.semanticDebug("Expresión operando");
+    semanticErrorManager.semanticInfo("Procesando expresión: operando simple.");
+
     Expresion expr = new Expresion();
     expr.setType(((Operando)o).getType());
     expr.setTemporal(((Operando)o).getTemporal());
     expr.setIntermediateCode(((Operando)o).getIntermediateCode());
+
+    semanticErrorManager.semanticDebug("Expresión operando: tipo=" + expr.getType().getName() + ", temporal=" + expr.getTemporal());
+
     RESULT = expr;
 :}
 | PARENTESISAP expresion:e PARENTESISCIERRE
 {:
-    semanticErrorManager.semanticDebug("Expresión paréntesis");
+    semanticErrorManager.semanticInfo("Procesando expresión entre paréntesis.");
+
     Expresion expr = new Expresion();
     expr.setType(e.getType());
     expr.setTemporal(e.getTemporal());
     expr.setIntermediateCode(e.getIntermediateCode());
+
+    semanticErrorManager.semanticDebug("Expresión paréntesis: tipo=" + expr.getType().getName() + ", temporal=" + expr.getTemporal());
+
     RESULT = expr;
 :};
-
 
 //operando          
 operando ::= BOOLEANO:bool
 {:
-   semanticErrorManager.semanticDebug("Procesando operando BOOLEANO: " + bool.getLexema());
+   semanticErrorManager.semanticInfo("Procesando operando BOOLEANO: " + bool.getLexema());
 
    ScopeIF scope = scopeManager.getCurrentScope();
-
    TypeBoolean typeBoolean = (TypeBoolean) scopeManager.searchType("BOOLEAN");
+
    if (typeBoolean == null) {
        semanticErrorManager.semanticFatalError("[Error] Tipo BOOLEAN no registrado en Scope Global.");
    }
+
    TemporalFactory tf = new TemporalFactory(scope);
    IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scope);
    TemporalIF temporal = tf.create();
+
    Value valor = new Value(bool.getLexema().equalsIgnoreCase("True"));
    iCb.addQuadruple(Nemonic.MV, temporal, valor);
 
@@ -1242,55 +1574,55 @@ operando ::= BOOLEANO:bool
    operando.setTemporal(temporal);
    operando.setType(typeBoolean);
    operando.setIntermediateCode(iCb.create());
-   
 
-   semanticErrorManager.semanticDebug("Operando BOOLEANO creado correctamente con valor: " + valor);
+   semanticErrorManager.semanticDebug("Operando BOOLEANO generado: temporal=" + temporal + ", valor=" + valor);
 
    RESULT = operando;
 :}
-IDENTIFICADOR:id
+| IDENTIFICADOR:id
 {:
-   semanticErrorManager.semanticDebug("Procesando operando IDENTIFICADOR: " + id.getLexema());
+   semanticErrorManager.semanticInfo("Procesando operando IDENTIFICADOR: " + id.getLexema());
 
    ScopeIF scope = scopeManager.getCurrentScope();
-   TemporalFactory tf = new TemporalFactory(scope);
-	IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scope);
-	TemporalIF temporal = tf.create();
-	String symbolName = id.getLexema();
-
    SymbolBase simbolo = (SymbolBase) scopeManager.searchSymbol(id.getLexema());
 
-   Operando operando = new Operando();
-   operando.setTemporal(temporal);
-   operando.setType(simbolo.getType());
    if (simbolo == null) {
        semanticErrorManager.semanticFatalError("[Error] Identificador '" + id.getLexema() + "' no declarado.");
    }
 
-	if(simbolo instanceof SymbolVariable){
-		Variable var = new Variable(symbolName, simbolo.getScope());
-		iCb.addQuadruple(Nemonic.MVP, temporal, var);
-	}
-	else if(simbolo instanceof SymbolConstant){
-		Value valor = new Value(((SymbolConstant)simbolo).getValue());
-		iCb.addQuadruple(Nemonic.MV, temporal, valor);
-	}else{
-    	semanticErrorManager.semanticFatalError("[Error] Identificador '" + id.getLexema() + "' no es una variable ni una constante.");
-	}
+   TemporalFactory tf = new TemporalFactory(scope);
+   IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scope);
+   TemporalIF temporal = tf.create();
+
+   Operando operando = new Operando();
+   operando.setTemporal(temporal);
+   operando.setType(simbolo.getType());
+
+   if (simbolo instanceof SymbolVariable) {
+       Variable var = new Variable(id.getLexema(), simbolo.getScope());
+       iCb.addQuadruple(Nemonic.MVP, temporal, var);
+       semanticErrorManager.semanticDebug("Identificador es una variable: MVP " + temporal + " <- " + var);
+   } else if (simbolo instanceof SymbolConstant) {
+       Value valor = new Value(((SymbolConstant) simbolo).getValue());
+       iCb.addQuadruple(Nemonic.MV, temporal, valor);
+       semanticErrorManager.semanticDebug("Identificador es una constante: MV " + temporal + " <- " + valor);
+   } else {
+       semanticErrorManager.semanticFatalError("[Error] Identificador '" + id.getLexema() + "' no es ni variable ni constante.");
+   }
 
    operando.setIntermediateCode(iCb.create());
-   
-   semanticErrorManager.semanticDebug("Operando IDENTIFICADOR creado correctamente con tipo: " + simbolo.getType().getName());
+
+   semanticErrorManager.semanticDebug("Operando IDENTIFICADOR generado: tipo=" + simbolo.getType().getName() + ", temporal=" + temporal);
 
    RESULT = operando;
 :}
 | ENTERO:intlit
 {:
-   semanticErrorManager.semanticDebug("Procesando operando ENTERO: " + intlit.getLexema());
+   semanticErrorManager.semanticInfo("Procesando operando ENTERO: " + intlit.getLexema());
 
    ScopeIF scope = scopeManager.getCurrentScope();
-
    TypeInteger typeInteger = (TypeInteger) scopeManager.searchType("INTEGER");
+
    if (typeInteger == null) {
        semanticErrorManager.semanticFatalError("[Error] Tipo INTEGER no registrado en Scope Global.");
    }
@@ -1298,6 +1630,7 @@ IDENTIFICADOR:id
    TemporalFactory tf = new TemporalFactory(scope);
    IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scope);
    TemporalIF temporal = tf.create();
+
    Value valor = new Value(Integer.parseInt(intlit.getLexema()));
    iCb.addQuadruple(Nemonic.MV, temporal, valor);
 
@@ -1306,52 +1639,66 @@ IDENTIFICADOR:id
    operando.setType(typeInteger);
    operando.setIntermediateCode(iCb.create());
 
-   semanticErrorManager.semanticDebug("Operando ENTERO creado correctamente con valor: " + valor);
+   semanticErrorManager.semanticDebug("Operando ENTERO generado: valor=" + valor + ", temporal=" + temporal);
 
    RESULT = operando;
 :};
 
 operadorRelacional ::= DISTINTO
 {:
-    semanticErrorManager.semanticDebug("Operador relacional: DISTINTO");
+    semanticErrorManager.semanticInfo("Procesando operador relacional: DISTINTO");
 
     OperadorRelacional operador = new OperadorRelacional();
     operador.setOperacion("DISTINTO");
+
+    semanticErrorManager.semanticDebug("OperadorRelacional creado: " + operador.getOperacion());
+
     RESULT = operador;
 :}
 | MAYOR
 {:
-    semanticErrorManager.semanticDebug("Operador relacional: MAYOR");
+    semanticErrorManager.semanticInfo("Procesando operador relacional: MAYOR");
 
     OperadorRelacional operador = new OperadorRelacional();
     operador.setOperacion("MAYOR");
+
+    semanticErrorManager.semanticDebug("OperadorRelacional creado: " + operador.getOperacion());
+
     RESULT = operador;
 :};
-
                         
 operadorAritmetico ::= MINUS
 {:
-    semanticErrorManager.semanticDebug("Operador aritmético: MINUS");
+    semanticErrorManager.semanticInfo("Procesando operador aritmético: MINUS");
 
     OperadorAritmetico operador = new OperadorAritmetico();
     operador.setOperacion("MINUS");
+
+    semanticErrorManager.semanticDebug("OperadorAritmetico creado: " + operador.getOperacion());
+
     RESULT = operador;
 :}
 | MULT
 {:
-    semanticErrorManager.semanticDebug("Operador aritmético: MULT");
+    semanticErrorManager.semanticInfo("Procesando operador aritmético: MULT");
 
     OperadorAritmetico operador = new OperadorAritmetico();
     operador.setOperacion("MULT");
+
+    semanticErrorManager.semanticDebug("OperadorAritmetico creado: " + operador.getOperacion());
+
     RESULT = operador;
 :};
 
 operadorLogico ::= AND
 {:
-    semanticErrorManager.semanticDebug("Operador lógico: AND");
+    semanticErrorManager.semanticInfo("Procesando operador lógico: AND");
 
     OperadorLogico operador = new OperadorLogico();
     operador.setOperacion("AND");
+
+    semanticErrorManager.semanticDebug("OperadorLogico creado: " + operador.getOperacion());
+
     RESULT = operador;
 :};
 
@@ -1360,33 +1707,51 @@ operadorLogico ::= AND
 //expresion de acceso a campos de registros                         
 expresionAccesoRegistro ::= IDENTIFICADOR:id1 ACCESO IDENTIFICADOR:id2
 {:
-    semanticErrorManager.semanticDebug("Acceso a campo simple: " + id1.getLexema() + "." + id2.getLexema());
-    
+    semanticErrorManager.semanticInfo("Procesando acceso simple a campo de record: " + id1.getLexema() + "." + id2.getLexema());
+
     ScopeIF scope = scopeManager.getCurrentScope();
     SymbolBase simbolo = (SymbolBase) scopeManager.searchSymbol(id1.getLexema());
 
     if (simbolo == null) {
         semanticFatalError("Identificador no declarado: " + id1.getLexema(), id1.getLine(), id1.getColumn());
     }
+
     if (!(simbolo.getType() instanceof TypeRecord)) {
-        semanticFatalError("Acceso no permitido: " + id1.getLexema() + " no es un RECORD.", id1.getLine(), id1.getColumn());
+        semanticFatalError("Acceso no permitido: '" + id1.getLexema() + "' no es un RECORD.", id1.getLine(), id1.getColumn());
     }
 
     TypeRecord typeRecord = (TypeRecord) simbolo.getType();
     TypeIF tipoCampo = typeRecord.getCampo(id2.getLexema());
 
     if (tipoCampo == null) {
-        semanticFatalError("El campo '" + id2.getLexema() + "' no existe en el record '" + id1.getLexema() + "'.", id2.getLine(), id2.getColumn());
+        semanticFatalError("El campo '" + id2.getLexema() + "' no existe en el RECORD '" + id1.getLexema() + "'.", id2.getLine(), id2.getColumn());
     }
 
-    // Crear ExpresionAccesoRegistro
+    // Construcción
     ExpresionAccesoRegistro ear = new ExpresionAccesoRegistro();
     ear.setType(tipoCampo);
+    ear.setFirstField(id2.getLexema());
+
+    // Código intermedio
+    TemporalFactory tf = new TemporalFactory(scope);
+    IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scope);
+    TemporalIF temp = tf.create();
+    Variable registro = new Variable(id1.getLexema(), simbolo.getScope());
+    Field campo = new Field(registro, id2.getLexema());
+
+    iCb.addQuadruple(Nemonic.MVR, temp, campo);
+
+    ear.setTemporal(temp);
+    ear.setIntermediateCode(iCb.create());
+
+    semanticErrorManager.semanticDebug("Acceso a campo '" + id2.getLexema() + "' del record '" + id1.getLexema() +
+                                       "' generado correctamente. Temporal: " + temp + ", Tipo: " + tipoCampo.getName());
+
     RESULT = ear;
 :}
 | IDENTIFICADOR:id1 ACCESO expresionAccesoRegistro:ear
 {:
-    semanticErrorManager.semanticDebug("Acceso a campo encadenado: " + id1.getLexema() + ".<resto>");
+    semanticErrorManager.semanticInfo("Procesando acceso encadenado: " + id1.getLexema() + ".<subregistro>");
 
     ScopeIF scope = scopeManager.getCurrentScope();
     SymbolBase simbolo = (SymbolBase) scopeManager.searchSymbol(id1.getLexema());
@@ -1394,8 +1759,9 @@ expresionAccesoRegistro ::= IDENTIFICADOR:id1 ACCESO IDENTIFICADOR:id2
     if (simbolo == null) {
         semanticFatalError("Identificador no declarado: " + id1.getLexema(), id1.getLine(), id1.getColumn());
     }
+
     if (!(simbolo.getType() instanceof TypeRecord)) {
-        semanticFatalError("Acceso no permitido: " + id1.getLexema() + " no es un RECORD.", id1.getLine(), id1.getColumn());
+        semanticFatalError("Acceso no permitido: '" + id1.getLexema() + "' no es un RECORD.", id1.getLine(), id1.getColumn());
     }
 
     TypeRecord typeRecord = (TypeRecord) simbolo.getType();
@@ -1405,35 +1771,46 @@ expresionAccesoRegistro ::= IDENTIFICADOR:id1 ACCESO IDENTIFICADOR:id2
         semanticFatalError("El campo '" + ear.getFirstField() + "' no existe en el record '" + id1.getLexema() + "'.", id1.getLine(), id1.getColumn());
     }
 
-    // Crear nueva ExpresionAccesoRegistro propagando el tipo final
     ExpresionAccesoRegistro nuevoEar = new ExpresionAccesoRegistro();
-    nuevoEar.setType(ear.getType()); // Tipo final del encadenamiento
+    nuevoEar.setType(ear.getType());
+    nuevoEar.setFirstField(ear.getFirstField());
+
+    // Código intermedio
+    TemporalFactory tf = new TemporalFactory(scope);
+    IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scope);
+    TemporalIF temp = tf.create();
+
+    Variable registro = new Variable(id1.getLexema(), simbolo.getScope());
+    Field campo = new Field(registro, ear.getFirstField());
+
+    iCb.addQuadruple(Nemonic.MVR, temp, campo);
+    iCb.addQuadruples(ear.getIntermediateCode());
+
+    nuevoEar.setTemporal(temp);
+    nuevoEar.setIntermediateCode(iCb.create());
+
+    semanticErrorManager.semanticDebug("Acceso encadenado generado: temporal=" + temp + ", tipo final=" + ear.getType().getName());
+
     RESULT = nuevoEar;
 :};
-
-
-
-
 
 
 //invocación de funciones                    
 exprFuncion ::= IDENTIFICADOR:id PARENTESISAP listaParametrosInvocacion:lpi PARENTESISCIERRE
 {:
-    semanticErrorManager.semanticDebug("Procesando invocación de función con parámetros");
+    semanticErrorManager.semanticInfo("Procesando invocación de función con parámetros: " + id.getLexema());
+
     ScopeIF scope = scopeManager.getCurrentScope();
-    
-    // Buscar la función
     SymbolBase simbolo = (SymbolBase) scopeManager.searchSymbol(id.getLexema());
+
     if (simbolo == null) {
         semanticFatalError("Función no declarada: " + id.getLexema(), id.getLine(), id.getColumn());
     }
     if (!(simbolo instanceof SymbolFunction)) {
         semanticFatalError("El identificador '" + id.getLexema() + "' no es una función.", id.getLine(), id.getColumn());
     }
-    
-    SymbolFunction function = (SymbolFunction) simbolo;
 
-    // Validar número de parámetros
+    SymbolFunction function = (SymbolFunction) simbolo;
     List<SymbolParameter> parametrosFormales = function.getParameterList();
     List<Expresion> parametrosActuales = ((ListaParametrosInvocacion)lpi).getParametros();
 
@@ -1441,47 +1818,58 @@ exprFuncion ::= IDENTIFICADOR:id PARENTESISAP listaParametrosInvocacion:lpi PARE
         semanticFatalError("Número incorrecto de parámetros en llamada a función '" + id.getLexema() + "'.", id.getLine(), id.getColumn());
     }
 
-    // Validar tipo de cada parámetro
     for (int i = 0; i < parametrosFormales.size(); i++) {
         TypeIF tipoFormal = parametrosFormales.get(i).getType();
         TypeIF tipoActual = parametrosActuales.get(i).getType();
+
         if (!tipoFormal.equals(tipoActual)) {
-            semanticFatalError("Tipo incorrecto en el parámetro " + (i+1) + " de la función '" + id.getLexema() + "'.", id.getLine(), id.getColumn());
+            semanticFatalError("Tipo incorrecto en el parámetro " + (i + 1) + " de la función '" + id.getLexema() + "'.", id.getLine(), id.getColumn());
         }
+
+        semanticErrorManager.semanticDebug("Parámetro " + (i + 1) + ": OK. Tipo=" + tipoActual.getName() +
+                                            ", Temporal=" + parametrosActuales.get(i).getTemporal());
     }
 
-    // Crear el objeto ExprFuncion
     ExprFuncion exprFuncion = new ExprFuncion();
     exprFuncion.setFuncion(function);
 
-    // Código intermedio
     IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scope);
+
     for (Expresion parametro : parametrosActuales) {
         iCb.addQuadruples(parametro.getIntermediateCode());
         iCb.addQuadruple(Nemonic.PARAM, parametro.getTemporal());
     }
+
     iCb.addQuadruple(Nemonic.CALL, function);
 
+    // Añadir instrucción para mover el valor de retorno
+    TemporalFactory tf = new TemporalFactory(scope);
+    TemporalIF tempRet = tf.create();
+    iCb.addQuadruple(Nemonic.MV, tempRet, new Retval());
+
+    exprFuncion.setTemporal(tempRet);
     exprFuncion.setIntermediateCode(iCb.create());
+
+    semanticErrorManager.semanticDebug("Llamada a función generada: retorno -> temporal " + tempRet);
 
     RESULT = exprFuncion;
 :}
 | IDENTIFICADOR:id PARENTESISAP PARENTESISCIERRE
 {:
-    semanticErrorManager.semanticDebug("Procesando invocación de función sin parámetros");
+    semanticErrorManager.semanticInfo("Procesando invocación de función sin parámetros: " + id.getLexema());
+
     ScopeIF scope = scopeManager.getCurrentScope();
-    
     SymbolBase simbolo = (SymbolBase) scopeManager.searchSymbol(id.getLexema());
+
     if (simbolo == null) {
         semanticFatalError("Función no declarada: " + id.getLexema(), id.getLine(), id.getColumn());
     }
     if (!(simbolo instanceof SymbolFunction)) {
         semanticFatalError("El identificador '" + id.getLexema() + "' no es una función.", id.getLine(), id.getColumn());
     }
-    
+
     SymbolFunction function = (SymbolFunction) simbolo;
-    
-    // Validar que la función no recibe parámetros
+
     if (!function.getParameterList().isEmpty()) {
         semanticFatalError("La función '" + id.getLexema() + "' requiere parámetros.", id.getLine(), id.getColumn());
     }
@@ -1492,25 +1880,39 @@ exprFuncion ::= IDENTIFICADOR:id PARENTESISAP listaParametrosInvocacion:lpi PARE
     IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scope);
     iCb.addQuadruple(Nemonic.CALL, function);
 
+    // Movimiento del valor de retorno
+    TemporalFactory tf = new TemporalFactory(scope);
+    TemporalIF tempRet = tf.create();
+    iCb.addQuadruple(Nemonic.MV, tempRet, new Retval());
+
+    exprFuncion.setTemporal(tempRet);
     exprFuncion.setIntermediateCode(iCb.create());
+
+    semanticErrorManager.semanticDebug("Llamada a función generada: retorno -> temporal " + tempRet);
 
     RESULT = exprFuncion;
 :};
-
        
 listaParametrosInvocacion ::= expresion:e
 {:
-    semanticErrorManager.semanticDebug("Lista de parámetros: primer parámetro");
+    semanticErrorManager.semanticInfo("Lista de parámetros: primer parámetro");
 
     ListaParametrosInvocacion listaParametros = new ListaParametrosInvocacion();
     listaParametros.addParametro((Expresion)e);
+
+    semanticErrorManager.semanticDebug("Parámetro 1 añadido. Tipo: " + e.getType().getName() + ", Temporal: " + e.getTemporal());
+
     RESULT = listaParametros;
 :}
 | expresion:e DELIMLISTA listaParametrosInvocacion:lpi
 {:
-    semanticErrorManager.semanticDebug("Lista de parámetros: añadir parámetro");
+    ListaParametrosInvocacion listaParametros = (ListaParametrosInvocacion)lpi;
+    listaParametros.addParametro((Expresion)e);
 
-    ((ListaParametrosInvocacion)lpi).addParametro((Expresion)e);
-    RESULT = lpi;
-:};                
-                    
+    int posicion = listaParametros.getParametros().size();
+
+    semanticErrorManager.semanticInfo("Lista de parámetros: añadir parámetro en posición " + posicion);
+    semanticErrorManager.semanticDebug("Parámetro " + posicion + " añadido. Tipo: " + e.getType().getName() + ", Temporal: " + e.getTemporal());
+
+    RESULT = listaParametros;
+:};              

@@ -46,4 +46,11 @@ public class Cuerpo extends NonTerminal {
     public void setSentencias(Sentencias sentencias) {
         this.sentencias = sentencias;
     }
+
+    @Override
+    public String toString() {
+        return "Cuerpo{" +
+                "sentencias=" + (sentencias != null ? sentencias.toString() : "null") +
+                '}';
+    }
 }

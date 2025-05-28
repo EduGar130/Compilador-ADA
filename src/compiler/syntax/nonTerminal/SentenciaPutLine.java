@@ -25,4 +25,11 @@ public class SentenciaPutLine extends Sentencia {
     public void setParametro(Parametro parametro) {
         this.parametro = parametro;
     }
+
+    @Override
+    public String toString() {
+        return "SentenciaPutLine{" +
+                "parametro=" + (parametro != null ? parametro.toString() : "null") +
+                '}';
+    }
 }

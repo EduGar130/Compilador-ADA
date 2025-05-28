@@ -58,4 +58,13 @@ public class Expresion extends NonTerminal {
     public void setIntermediateCode(List<QuadrupleIF> intermediateCode) {
         this.intermediateCode = intermediateCode;
     }
+
+    @Override
+    public String toString() {
+        return "Expresion{" +
+                "type=" + (type != null ? type.toString() : "null") +
+                ", temporal=" + (temporal != null ? temporal.toString() : "null") +
+                ", intermediateCode=" + (intermediateCode != null ? intermediateCode.toString() : "null") +
+                '}';
+    }
 }

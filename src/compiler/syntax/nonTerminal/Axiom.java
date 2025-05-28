@@ -46,4 +46,11 @@ public class Axiom extends NonTerminal {
     public void setProgram(Program program) {
         this.program = program;
     }
+
+    @Override
+    public String toString() {
+        return "Axiom{" +
+                "program=" + (program != null ? program.toString() : "null") +
+                '}';
+    }
 }

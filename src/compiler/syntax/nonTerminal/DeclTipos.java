@@ -27,4 +27,20 @@ public class DeclTipos extends NonTerminal {
     public List<DeclTipo> getTipos() {
         return tipos;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("DeclTipos{");
+        sb.append("tipos=");
+        if (tipos.isEmpty()) {
+            sb.append("[]");
+        } else {
+            sb.append("\n");
+            for (DeclTipo tipo : tipos) {
+                sb.append("  ").append(tipo.toString()).append("\n");
+            }
+            sb.append("}");
+        }
+        return sb.toString();
+    }
 }
