@@ -3,3 +3,5 @@
 /classes
 
 /doc/api
+src/compiler/syntax/sym.java
+src/compiler/syntax/parser.java
