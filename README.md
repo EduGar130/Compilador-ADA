@@ -53,22 +53,22 @@ ant build
 
 ## Test del analizador léxico
 ```bash
-ant flexTest -Dtest-file-name=ejemplo.hu
+ant flexTest -Dtest-file-name="ejemplo.hu"
 ```
 
 ## Test del analizador sintáctico
 ```bash
-ant cupTest -Dtest-file-name=ejemplo.hu
+ant cupTest -Dtest-file-name="ejemplo.hu"
 ```
 
 ## Generación de código final
 ```bash
-ant finalTest -Dtest-file-name=ejemplo.hu
+ant finalTest -Dtest-file-name="ejemplo.hu"
 ```
 El fichero ensamblador se generará en el mismo directorio que el fichero fuente, con extensión .ens.
 
 ## 🧠 Autor
-Eduardo Garcia Romera
+Eduardo García Romera
 
 UNED - Ingeniería Informática (Curso 2024/2025)
 
