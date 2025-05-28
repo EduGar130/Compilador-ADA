@@ -31,6 +31,19 @@ public class SymbolFunction extends SymbolProcedure {
     }
 
     /**
+     * Constructor de SymbolFunction con lista de parámetros.
+     * 
+     * @param scope         Ámbito de declaración.
+     * @param name          Nombre de la función.
+     * @param type          Tipo de retorno de la función.
+     * @param parameterList Lista de parámetros formales de la función.
+     */
+    public SymbolFunction(ScopeIF scope, String name, TypeIF type, List<SymbolParameter> parameterList) {
+        super(scope, name, type);
+        this.parameterList = parameterList;
+    }
+
+    /**
      * Devuelve la lista de parámetros formales de la función.
      * 
      * @return Lista de parámetros.

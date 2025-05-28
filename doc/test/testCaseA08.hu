@@ -20,7 +20,7 @@ function resta2 (x, y: out Integer; a: out Boolean) return Integer is
 
 begin
 	
-	a := 5;
+	a := true;
 	return x-y;	
 
 end resta;

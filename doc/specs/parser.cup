@@ -203,7 +203,6 @@ program ::=
         semanticErrorManager.semanticDebug("Tipo INTEGER registrado: " + typeInteger);
 
         semanticErrorManager.semanticDebug("Tabla de tipos en scope global: " + typeTable);
-
   :}
   axiom:ax
   {:   		
@@ -391,6 +390,7 @@ constante ::= IDENTIFICADOR:id DELIMTIPO CONSTANT ASIGNACION literal:lit DELIMPU
 
     TypeIF type = ((Literal) lit).getType();
     SymbolConstant symbol = new SymbolConstant(id.getLexema(), scopeManager.getCurrentScope(), type);
+    symbol.setValue(((Literal) lit).getValor());
     symbol.setType(type);
 
     SymbolTableIF symbolTable = scopeManager.getCurrentScope().getSymbolTable();
@@ -565,7 +565,7 @@ declVariables ::= declVariable:dv
     RESULT = dvs;
 :};
 
-declVariable ::= IDENTIFICADOR:id DELIMTIPO tipo:t
+declVariable ::= IDENTIFICADOR:id DELIMTIPO tipo:t DELIMPUNTOCOMA
 {:
     String nombre = id.getLexema();
     TypeIF tipoVariable = ((Tipo)t).getType();
@@ -713,10 +713,34 @@ declSubprograma ::= declFunction:df
 :};
 
 //declaración función
-declFunction ::= FUNCTION IDENTIFICADOR:id PARENTESISAP declParametros:dp PARENTESISCIERRE RETURN tipoRetorno:tr IS declaracionesFunction:df cuerpoFunction:cf
+declFunction ::= FUNCTION IDENTIFICADOR:id PARENTESISAP declParametros:dp PARENTESISCIERRE RETURN tipoRetorno:tr IS
 {:
     semanticErrorManager.semanticInfo("Procesando declaración de función con parámetros: " + id.getLexema());
-
+    // Abrir un nuevo ámbito para la función
+    ScopeIF subprogramScope = scopeManager.openScope(id.getLexema());
+    SymbolTableIF symbolTable = subprogramScope.getSymbolTable();
+    if (symbolTable.containsSymbol(id.getLexema())) {
+        semanticFatalError("Función duplicada: " + id.getLexema(), id.getLine(), id.getColumn());
+    }
+    semanticErrorManager.semanticDebug("Ámbito de la función abierto: " + subprogramScope.getName());
+    // Registrar los parámetros en el ámbito de la función
+    for (DeclParametro parametro : ((DeclParametros) dp).getParametros()) {
+        List<String> nombresParametros = parametro.getListaParametros().getIdentificadores();
+        for(String paramName : nombresParametros) {
+            TypeIF paramType = parametro.getTipo().getType();
+            SymbolVariable symbol = new SymbolVariable(subprogramScope, paramName, paramType);
+            if (symbolTable.containsSymbol(paramName)) {
+                semanticFatalError("Parámetro duplicado: " + paramName, id.getLine(), id.getColumn());
+            }
+            symbolTable.addSymbol(symbol);
+            semanticErrorManager.semanticDebug("Parámetro añadido al ámbito de la función: " + symbol.toString());
+        }
+    }
+    semanticErrorManager.semanticDebug("Tabla de símbolos en el ámbito de la función: " + symbolTable.toString());
+:}
+declaracionesFunction:df cuerpoFunction:cf
+{:
+    // Crear el objeto DeclFunction
     DeclFunction declFunction = new DeclFunction();
     declFunction.setNombre(id.getLexema());
     declFunction.setParametros((DeclParametros) dp);
@@ -725,12 +749,43 @@ declFunction ::= FUNCTION IDENTIFICADOR:id PARENTESISAP declParametros:dp PARENT
     declFunction.setCuerpo((CuerpoFunction) cf);
 
     semanticErrorManager.semanticDebug("Función declarada: " + declFunction.toString());
+    ScopeIF subprogramScope = scopeManager.getCurrentScope();
+
+    // Obtenemos los parametros de la función
+    List<SymbolParameter> parametros = new ArrayList<>();
+    for (DeclParametro parametro : ((DeclParametros) dp).getParametros()) {
+        List<String> nombresParametros = parametro.getListaParametros().getIdentificadores();
+        TypeIF tipoParametro = parametro.getTipo().getType();
+        for (String paramName : nombresParametros) {
+            SymbolParameter symbolParameter = new SymbolParameter(subprogramScope, paramName, tipoParametro);
+            parametros.add(symbolParameter);
+            semanticErrorManager.semanticDebug("Parámetro añadido: " + symbolParameter.toString());
+        }
+    }
+
+    //Cerrar el ámbito de la función
+    scopeManager.closeScope();
+    semanticErrorManager.semanticDebug("Ámbito de la función cerrado correctamente.");
+
+    // Añadir la función a la tabla de símbolos del ámbito superior
+    ScopeIF fatherScope = scopeManager.getCurrentScope();
+    SymbolTableIF fatherSymbolTable = fatherScope.getSymbolTable();
+    if (fatherSymbolTable.containsSymbol(id.getLexema())) {
+        semanticFatalError("Función duplicada: " + id.getLexema(), id.getLine(), id.getColumn());
+    }
+    fatherSymbolTable.addSymbol(new SymbolFunction(fatherScope, declFunction.getNombre(), declFunction.getTipoRetorno().getType(), parametros));
+
+    semanticErrorManager.semanticDebug("Función añadida a la tabla de símbolos del ámbito padre: " + declFunction.getNombre());
 
     RESULT = declFunction;
 :}
 | FUNCTION IDENTIFICADOR:id PARENTESISAP PARENTESISCIERRE RETURN tipoRetorno:tr IS declaracionesFunction:df cuerpoFunction:cf
 {:
     semanticErrorManager.semanticInfo("Procesando declaración de función sin parámetros: " + id.getLexema());
+
+    // Abrir un nuevo ámbito para la función
+    ScopeIF subprogramScope = scopeManager.openScope(id.getLexema());
+    SymbolTableIF symbolTable = subprogramScope.getSymbolTable();
 
     DeclFunction declFunction = new DeclFunction();
     declFunction.setNombre(id.getLexema());
@@ -741,13 +796,16 @@ declFunction ::= FUNCTION IDENTIFICADOR:id PARENTESISAP declParametros:dp PARENT
 
     semanticErrorManager.semanticDebug("Función declarada: " + declFunction.toString());
 
+    //Cerrar el ámbito de la función
+    scopeManager.closeScope();
+    semanticErrorManager.semanticDebug("Ámbito de la función cerrado correctamente.");
     RESULT = declFunction;
 :};
 				
 declParametros ::= declParametro:dp DELIMPUNTOCOMA declParametros:dps
 {:
     semanticErrorManager.semanticInfo("Procesando parámetro seguido de más parámetros.");
-
+    ScopeIF scope = scopeManager.getCurrentScope();
     DeclParametros declParametros = new DeclParametros();
     declParametros.addParametro((DeclParametro) dp);
     declParametros.getParametros().addAll(((DeclParametros) dps).getParametros());
@@ -860,7 +918,6 @@ tipoRetorno ::= INTEGER
 declaracionesFunction ::= grupoDeclaraciones1:gd1
 {:
     semanticErrorManager.semanticInfo("Procesando declaraciones locales de la función.");
-
     DeclaracionesFunction declaracionesFunction = new DeclaracionesFunction();
     declaracionesFunction.setGrupoDeclaraciones1((GrupoDeclaraciones1) gd1);
 
@@ -1035,7 +1092,7 @@ sentencia ::= sentenciaPutLine:sp
 :};
        
 //sentencia asignación            
-sentenciaAsignacion ::= ref:r ASIGNACION expresion:e DELIMPUNTOCOMA
+sentenciaAsignacion ::= ref:r ASIGNACION:a expresion:e DELIMPUNTOCOMA
 {:
     semanticErrorManager.semanticInfo("Procesando sentencia de asignación.");
 
@@ -1046,7 +1103,8 @@ sentenciaAsignacion ::= ref:r ASIGNACION expresion:e DELIMPUNTOCOMA
     if (!referencia.getType().equals(expresion.getType())) {
         semanticFatalError("Error de tipos en asignación. Se esperaba tipo " +
             referencia.getType().getName() + ", pero se obtuvo " +
-            expresion.getType().getName(), 0, 0);
+            expresion.getType().getName(), 
+            ((Token) a).getLine(), ((Token) a).getColumn());
     }
 
     SentenciaAsignacion sentenciaAsignacion = new SentenciaAsignacion();
@@ -1587,6 +1645,7 @@ operando ::= BOOLEANO:bool
    SymbolBase simbolo = (SymbolBase) scopeManager.searchSymbol(id.getLexema());
 
    if (simbolo == null) {
+        semanticErrorManager.semanticDebug("Tabla de símbolos actual: " + scopeManager.getCurrentScope().getSymbolTable());
        semanticErrorManager.semanticFatalError("[Error] Identificador '" + id.getLexema() + "' no declarado.");
    }
 
@@ -1804,6 +1863,7 @@ exprFuncion ::= IDENTIFICADOR:id PARENTESISAP listaParametrosInvocacion:lpi PARE
     SymbolBase simbolo = (SymbolBase) scopeManager.searchSymbol(id.getLexema());
 
     if (simbolo == null) {
+        semanticErrorManager.semanticDebug("Tabla de símbolos actual: " + scopeManager.getCurrentScope().getSymbolTable());
         semanticFatalError("Función no declarada: " + id.getLexema(), id.getLine(), id.getColumn());
     }
     if (!(simbolo instanceof SymbolFunction)) {
