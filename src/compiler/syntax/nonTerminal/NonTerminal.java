@@ -39,19 +39,4 @@ public abstract class NonTerminal
         this.intermediateCode = intermediateCode;
     }
 
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder(getClass().getSimpleName() + "{");
-        sb.append("intermediateCode=");
-        if (intermediateCode.isEmpty()) {
-            sb.append("[]");
-        } else {
-            sb.append("\n");
-            for (QuadrupleIF q : intermediateCode) {
-                sb.append("  ").append(q.toString()).append("\n");
-            }
-            sb.append("}");
-        }
-        return sb.toString();
-    }
 }

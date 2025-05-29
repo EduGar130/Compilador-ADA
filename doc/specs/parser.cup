@@ -216,8 +216,8 @@ program ::=
         List intermediateCode = ax.getIntermediateCode();
         if (intermediateCode != null) {
             semanticErrorManager.semanticInfo("Generamos output .ens");
-            finalCodeFactory.create(intermediateCode);
             semanticErrorManager.semanticDebug("Código intermedio generado: " + intermediateCode);
+            finalCodeFactory.create(intermediateCode);
         } else {
             semanticFatalError(SemanticErrors.NPV, 0, 0);
         }
@@ -244,6 +244,20 @@ axiom ::= PROCEDURE IDENTIFICADOR:id PARENTESISAP PARENTESISCIERRE IS declaracio
 
     Axiom axiom = new Axiom(new Program(decl, c));
 
+    // Añadimos el código intermedio
+    List<QuadrupleIF> intermediateCode = new ArrayList<>();
+    if (c.getIntermediateCode() != null) {
+        intermediateCode.addAll(c.getIntermediateCode());
+    } else {
+        semanticFatalError(SemanticErrors.NPV, idToken.getLine(), idToken.getColumn());
+    }
+    if (decl.getIntermediateCode() != null) {
+        intermediateCode.addAll(decl.getIntermediateCode());
+    } else {
+        semanticFatalError(SemanticErrors.NPV, idToken.getLine(), idToken.getColumn());
+    }
+    axiom.setIntermediateCode(intermediateCode);
+
     semanticErrorManager.semanticDebug("Declaraciones procesadas: " + decl.toString());
     semanticErrorManager.semanticDebug("Cuerpo del programa: " + c.toString());
     semanticErrorManager.semanticDebug("Objeto Axiom generado: " + axiom.toString());
@@ -262,6 +276,20 @@ declaraciones ::= declConstantes:dc grupoDeclaraciones1:gd1
     declaraciones.setDeclConstantes((DeclConstantes) dc);
     declaraciones.setGrupoDeclaraciones1((GrupoDeclaraciones1) gd1);
 
+    // Añadimos el código intermedio de las declaraciones
+    List<QuadrupleIF> intermediateCode = new ArrayList<>();
+    if (dc.getIntermediateCode() != null) {
+        intermediateCode.addAll(dc.getIntermediateCode());
+    } else {
+        semanticFatalError(SemanticErrors.NPV, 0, 0);
+    }
+    if (gd1.getIntermediateCode() != null) {
+        intermediateCode.addAll(gd1.getIntermediateCode());
+    } else {
+        semanticFatalError(SemanticErrors.NPV, 0, 0);
+    }
+    declaraciones.setIntermediateCode(intermediateCode);
+
     semanticErrorManager.semanticDebug("DeclConstantes: " + dc.toString());
     semanticErrorManager.semanticDebug("GrupoDeclaraciones1: " + gd1.toString());
     semanticErrorManager.semanticDebug("Declaraciones generadas: " + declaraciones.toString());
@@ -275,19 +303,40 @@ declaraciones ::= declConstantes:dc grupoDeclaraciones1:gd1
     Declaraciones declaraciones = new Declaraciones();
     declaraciones.setGrupoDeclaraciones1((GrupoDeclaraciones1) gd1);
 
+    // Añadimos el código intermedio del grupo de declaraciones
+    if (gd1.getIntermediateCode() != null) {
+        declaraciones.setIntermediateCode(gd1.getIntermediateCode());
+    } else {
+        semanticFatalError(SemanticErrors.NPV, 0, 0);
+    }
+
     semanticErrorManager.semanticDebug("GrupoDeclaraciones1: " + gd1.toString());
     semanticErrorManager.semanticDebug("Declaraciones generadas: " + declaraciones.toString());
 
     RESULT = declaraciones;
 :};
 
-grupoDeclaraciones1 ::= declTipos:dt grupoDeclaraciones2:gd2
+grupoDeclaraciones1 ::= declTipos:dt grupoDeclaraciones2:gd2 // TODO
 {:
     semanticErrorManager.semanticInfo("Procesando grupo de declaraciones 1 con tipos y grupo de declaraciones 2.");
 
     GrupoDeclaraciones1 grupoDeclaraciones1 = new GrupoDeclaraciones1();
     grupoDeclaraciones1.setDeclTipos((DeclTipos) dt);
     grupoDeclaraciones1.setGrupoDeclaraciones2((GrupoDeclaraciones2) gd2);
+
+    // Añadimos el código intermedio de las declaraciones
+    List<QuadrupleIF> intermediateCode = new ArrayList<>();
+    if (dt.getIntermediateCode() != null) {
+        intermediateCode.addAll(dt.getIntermediateCode());
+    } else {
+        semanticFatalError(SemanticErrors.NPV, 0, 0);
+    }
+    if (gd2.getIntermediateCode() != null) {
+        intermediateCode.addAll(gd2.getIntermediateCode());
+    } else {
+        semanticFatalError(SemanticErrors.NPV, 0, 0);
+    }
+    grupoDeclaraciones1.setIntermediateCode(intermediateCode);
 
     semanticErrorManager.semanticDebug("DeclTipos: " + dt.toString());
     semanticErrorManager.semanticDebug("GrupoDeclaraciones2: " + gd2.toString());
@@ -301,6 +350,15 @@ grupoDeclaraciones1 ::= declTipos:dt grupoDeclaraciones2:gd2
 
     GrupoDeclaraciones1 grupoDeclaraciones1 = new GrupoDeclaraciones1();
     grupoDeclaraciones1.setGrupoDeclaraciones2((GrupoDeclaraciones2) gd2);
+
+    // Añadimos el código intermedio del grupo de declaraciones 2
+    List<QuadrupleIF> intermediateCode = new ArrayList<>();
+    if (gd2.getIntermediateCode() != null) {
+        grupoDeclaraciones1.setIntermediateCode(gd2.getIntermediateCode());
+    } else {
+        semanticFatalError(SemanticErrors.NPV, 0, 0);
+    }
+    grupoDeclaraciones1.setIntermediateCode(intermediateCode);
 
     semanticErrorManager.semanticDebug("GrupoDeclaraciones2: " + gd2.toString());
     semanticErrorManager.semanticDebug("GrupoDeclaraciones1 generado: " + grupoDeclaraciones1.toString());
@@ -367,6 +425,16 @@ declConstantes ::= constante:c
     DeclConstantes declConstantes = new DeclConstantes();
     declConstantes.addConstante(c);
 
+    // Añadimos el código intermedio de la constante
+    List<QuadrupleIF> intermediateCode = new ArrayList<>();
+    if (c.getIntermediateCode() != null) {
+        intermediateCode.addAll(c.getIntermediateCode());
+    } else {
+        semanticFatalError(SemanticErrors.NPV, 0, 0);
+    }
+
+    declConstantes.setIntermediateCode(intermediateCode);
+
     semanticErrorManager.semanticDebug("Constante añadida: " + c.toString());
     semanticErrorManager.semanticDebug("DeclConstantes actual: " + declConstantes.toString());
 
@@ -377,6 +445,13 @@ declConstantes ::= constante:c
     semanticErrorManager.semanticInfo("Añadiendo constante simbólica adicional.");
 
     dcs.addConstante(c);
+
+    // Añadimos también su código intermedio
+    if (c.getIntermediateCode() != null) {
+        dcs.getIntermediateCode().addAll(c.getIntermediateCode());
+    } else {
+        semanticFatalError(SemanticErrors.NPV, 0, 0);
+    }
 
     semanticErrorManager.semanticDebug("Constante añadida: " + c.toString());
     semanticErrorManager.semanticDebug("DeclConstantes actualizada: " + dcs.toString());
@@ -407,6 +482,23 @@ constante ::= IDENTIFICADOR:id DELIMTIPO CONSTANT ASIGNACION literal:lit DELIMPU
     Constante constante = new Constante(symbol, type);
     semanticErrorManager.semanticDebug("Objeto Constante generado: " + constante.toString());
 
+    // Generación del código intermedio
+    List<QuadrupleIF> intermediateCode = new ArrayList<>();
+
+    if (lit.getIntermediateCode() != null) {
+        intermediateCode.addAll(lit.getIntermediateCode());
+
+        // Añadir el cuarteto MOVE para asociar el valor del literal al identificador de la constante
+        Variable constantRef = new Variable(id.getLexema(), scopeManager.getCurrentScope());
+        intermediateCode.add(new Quadruple("MOVE", constantRef, ((Literal) lit).getTemporal(), null));
+    } else {
+        semanticFatalError(SemanticErrors.NPV, id.getLine(), id.getColumn());
+    }
+
+    // Asociamos el código intermedio a la constante
+    constante.setIntermediateCode(intermediateCode);
+    semanticErrorManager.semanticDebug("Código intermedio generado para la constante: " + constante.getIntermediateCode());
+
     RESULT = constante;
 :};
 
@@ -414,9 +506,11 @@ literal ::= ENTERO:ent
 {:
     semanticErrorManager.semanticInfo("Procesando literal entero: " + ent.getLexema());
 
+    // Tipo entero
     TypeInteger typeInteger = (TypeInteger) scopeManager.searchType("INTEGER");
     Literal literal = new Literal(ent.getLexema(), typeInteger);
 
+    // Creamos el temporal
     if (scopeManager.getCurrentScope() != null) {
         literal.crearTemporal(scopeManager.getCurrentScope());
         semanticErrorManager.semanticDebug("Literal entero con temporal generado: " + literal.toString());
@@ -424,21 +518,41 @@ literal ::= ENTERO:ent
         semanticErrorManager.semanticFatalError("[Error] Scope actual no disponible para crear temporal.");
     }
 
+    // Código intermedio: asignamos el literal a su temporal
+    IntermediateCodeBuilder builder = new IntermediateCodeBuilder(scopeManager.getCurrentScope());
+
+    Value value = new Value(Integer.parseInt(ent.getLexema()));
+    builder.addQuadruple("MOVE", literal.getTemporal(), value, null);
+
+    // Asociamos el código intermedio al literal
+    literal.setIntermediateCode(builder.create());
+
     RESULT = literal;
 :}
 | BOOLEANO:bool
 {:
     semanticErrorManager.semanticInfo("Procesando literal booleano: " + bool.getLexema());
 
+    // Tipo booleano
     TypeBoolean typeBoolean = (TypeBoolean) scopeManager.searchType("BOOLEAN");
     Literal literal = new Literal(bool.getLexema(), typeBoolean);
 
+    // Creamos el temporal
     if (scopeManager.getCurrentScope() != null) {
         literal.crearTemporal(scopeManager.getCurrentScope());
         semanticErrorManager.semanticDebug("Literal booleano con temporal generado: " + literal.toString());
     } else {
         semanticErrorManager.semanticFatalError("[Error] Scope actual no disponible para crear temporal.");
     }
+
+    // Código intermedio: asignamos el valor booleano al temporal
+    IntermediateCodeBuilder builder = new IntermediateCodeBuilder(scopeManager.getCurrentScope());
+
+    Value value = new Value(bool.getLexema()); // "True" o "False"
+    builder.addQuadruple("MOVE", literal.getTemporal(), value, null);
+
+    // Asociamos el código intermedio al literal
+    literal.setIntermediateCode(builder.create());
 
     RESULT = literal;
 :};
@@ -451,6 +565,15 @@ declTipos ::= declTipo:dt
     DeclTipos declTipos = new DeclTipos();
     declTipos.addTipo(dt);
 
+    // Añadimos el código intermedio del tipo
+    List<QuadrupleIF> intermediateCode = new ArrayList<>();
+    if (dt.getIntermediateCode() != null) {
+        intermediateCode.addAll(dt.getIntermediateCode());
+    } else {
+        semanticFatalError(SemanticErrors.NPV, 0, 0);
+    }
+    declTipos.setIntermediateCode(intermediateCode);
+
     semanticErrorManager.semanticDebug("Tipo añadido: " + dt.toString());
     semanticErrorManager.semanticDebug("DeclTipos generado: " + declTipos.toString());
 
@@ -461,6 +584,14 @@ declTipos ::= declTipo:dt
     semanticErrorManager.semanticInfo("Procesando tipo adicional definido por el usuario.");
 
     dts.addTipo(dt);
+    // Añadimos también su código intermedio
+    List<QuadrupleIF> intermediateCode = new ArrayList<>();
+    if (dt.getIntermediateCode() != null) {
+        dts.getIntermediateCode().addAll(dt.getIntermediateCode());
+    } else {
+        semanticFatalError(SemanticErrors.NPV, 0, 0);
+    }
+    dts.setIntermediateCode(intermediateCode);
 
     semanticErrorManager.semanticDebug("Tipo añadido: " + dt.toString());
     semanticErrorManager.semanticDebug("DeclTipos actualizado: " + dts.toString());
