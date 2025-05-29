@@ -34,7 +34,10 @@ public class Nemonic {
     public final static String RVFUNCT = "RVFUNCT"; // RVFUNCT x --> Almacena en x el valor tomado del Campo de Retorno
                                                     // del registro de activacin actual.
     public final static String EQ = "EQ"; // EQ x y z --> x := (y == z) (igualdad)
+    public final static String NEQ = "NEQ"; // NEQ x y z --> x := (y != z) (desigualdad)
     public final static String LT = "LT"; // LT x y z --> x := (y < z) (menor)
+    public final static String GE = "GE"; // GE x y z --> x := (y >= z) (mayor o igual)
+    public final static String LE = "LE"; // LE x y z --> x := (y <= z) (menor o igual)
     public final static String INC = "INC"; // INC x --> x := x + 1 (autoincremento)
     public final static String NOT = "NOT"; // NOT x y --> x := !y (negación lógica)
     public final static String MOD = "MOD"; // MOD x y z --> x := y % z (módulo)
@@ -49,4 +52,9 @@ public class Nemonic {
                                             // es igual a registro2 (branch not equal)
     public final static String WRSTR = "WRSTR"; // WRSTR s --> Escribe el String s por pantalla (write string)
     public final static String WRINT = "WRINT"; // WRINT n --> Escribe el entero n por pantalla (write integer)
+
+    // Nemonicos simbolicos
+    public final static String TYPE_USED = "TYPE_USED"; // TYPE_USED T --> Indica que el tipo T ha sido utilizado
+    public final static String MOVE = "MOVE"; // MOVE x y --> Mueve el valor de x a y (copia de valor)
+    public final static String DECL = "DECL"; // DECL x --> Declara la variable x (declaración de variable)
 }

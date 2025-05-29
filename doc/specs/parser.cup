@@ -374,6 +374,20 @@ grupoDeclaraciones2 ::= declVariables:dv grupoDeclaraciones3:gd3
     grupoDeclaraciones2.setDeclVariables((DeclVariables) dv);
     grupoDeclaraciones2.setGrupoDeclaraciones3((GrupoDeclaraciones3) gd3);
 
+    // Añadimos el código intermedio de las declaraciones
+    List<QuadrupleIF> intermediateCode = new ArrayList<>();
+    if (dv.getIntermediateCode() != null) {
+        intermediateCode.addAll(dv.getIntermediateCode());
+    } else {
+        semanticFatalError(SemanticErrors.NPV, 0, 0);
+    }
+    if (gd3.getIntermediateCode() != null) {
+        intermediateCode.addAll(gd3.getIntermediateCode());
+    } else {
+        semanticFatalError(SemanticErrors.NPV, 0, 0);
+    }
+    grupoDeclaraciones2.setIntermediateCode(intermediateCode);
+
     semanticErrorManager.semanticDebug("DeclVariables: " + dv.toString());
     semanticErrorManager.semanticDebug("GrupoDeclaraciones3: " + gd3.toString());
     semanticErrorManager.semanticDebug("GrupoDeclaraciones2 generado: " + grupoDeclaraciones2.toString());
@@ -386,6 +400,15 @@ grupoDeclaraciones2 ::= declVariables:dv grupoDeclaraciones3:gd3
 
     GrupoDeclaraciones2 grupoDeclaraciones2 = new GrupoDeclaraciones2();
     grupoDeclaraciones2.setGrupoDeclaraciones3((GrupoDeclaraciones3) gd3);
+
+    // Añadimos el código intermedio de las declaraciones
+    List<QuadrupleIF> intermediateCode = new ArrayList<>();
+    if (gd3.getIntermediateCode() != null) {
+        intermediateCode.addAll(gd3.getIntermediateCode());
+    } else {
+        semanticFatalError(SemanticErrors.NPV, 0, 0);
+    }
+    grupoDeclaraciones2.setIntermediateCode(intermediateCode);
 
     semanticErrorManager.semanticDebug("GrupoDeclaraciones3: " + gd3.toString());
     semanticErrorManager.semanticDebug("GrupoDeclaraciones2 generado: " + grupoDeclaraciones2.toString());
@@ -400,6 +423,14 @@ grupoDeclaraciones3 ::= declSubprogramas:ds
     GrupoDeclaraciones3 grupoDeclaraciones3 = new GrupoDeclaraciones3();
     grupoDeclaraciones3.setDeclSubprogramas((DeclSubprogramas) ds);
 
+    // Añadimos el código intermedio de las declaraciones
+    List<QuadrupleIF> intermediateCode = new ArrayList<>();
+    if (ds.getIntermediateCode() != null) {
+        intermediateCode.addAll(ds.getIntermediateCode());
+    } else {
+        semanticFatalError(SemanticErrors.NPV, 0, 0);
+    }
+
     semanticErrorManager.semanticDebug("DeclSubprogramas: " + ds.toString());
     semanticErrorManager.semanticDebug("GrupoDeclaraciones3 generado: " + grupoDeclaraciones3.toString());
 
@@ -411,6 +442,8 @@ grupoDeclaraciones3 ::= declSubprogramas:ds
 
     GrupoDeclaraciones3 grupoDeclaraciones3 = new GrupoDeclaraciones3();
     grupoDeclaraciones3.setDeclSubprogramas(null);
+
+    // No hay código intermedio que añadir, ya que no hay subprogramas
 
     semanticErrorManager.semanticDebug("GrupoDeclaraciones3 generado (vacío): " + grupoDeclaraciones3.toString());
 
@@ -490,7 +523,7 @@ constante ::= IDENTIFICADOR:id DELIMTIPO CONSTANT ASIGNACION literal:lit DELIMPU
 
         // Añadir el cuarteto MOVE para asociar el valor del literal al identificador de la constante
         Variable constantRef = new Variable(id.getLexema(), scopeManager.getCurrentScope());
-        intermediateCode.add(new Quadruple("MOVE", constantRef, ((Literal) lit).getTemporal(), null));
+        intermediateCode.add(new Quadruple(Nemonic.MOVE, constantRef, ((Literal) lit).getTemporal(), null));
     } else {
         semanticFatalError(SemanticErrors.NPV, id.getLine(), id.getColumn());
     }
@@ -522,7 +555,7 @@ literal ::= ENTERO:ent
     IntermediateCodeBuilder builder = new IntermediateCodeBuilder(scopeManager.getCurrentScope());
 
     Value value = new Value(Integer.parseInt(ent.getLexema()));
-    builder.addQuadruple("MOVE", literal.getTemporal(), value, null);
+    builder.addQuadruple(Nemonic.MOVE, literal.getTemporal(), value, null);
 
     // Asociamos el código intermedio al literal
     literal.setIntermediateCode(builder.create());
@@ -549,7 +582,7 @@ literal ::= ENTERO:ent
     IntermediateCodeBuilder builder = new IntermediateCodeBuilder(scopeManager.getCurrentScope());
 
     Value value = new Value(bool.getLexema()); // "True" o "False"
-    builder.addQuadruple("MOVE", literal.getTemporal(), value, null);
+    builder.addQuadruple(Nemonic.MOVE, literal.getTemporal(), value, null);
 
     // Asociamos el código intermedio al literal
     literal.setIntermediateCode(builder.create());
@@ -703,7 +736,6 @@ declVariable ::= IDENTIFICADOR:id DELIMTIPO tipo:t DELIMPUNTOCOMA
 
     semanticErrorManager.semanticInfo("Procesando declaración de variable: " + nombre + " : " + tipoVariable.getName());
 
-    // Crear el símbolo de la variable
     SymbolVariable symbol = new SymbolVariable(scopeManager.getCurrentScope(), nombre, tipoVariable);
 
     SymbolTableIF symbolTable = scopeManager.getCurrentScope().getSymbolTable();
@@ -712,10 +744,18 @@ declVariable ::= IDENTIFICADOR:id DELIMTIPO tipo:t DELIMPUNTOCOMA
     }
     symbolTable.addSymbol(symbol);
 
+    // Código intermedio: declarar variable
+    IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scopeManager.getCurrentScope());
+    Variable var = new Variable(nombre, symbol.getScope());
+    iCb.addQuadruple(Nemonic.DECL, var);
+
+    DeclVariable declVariable = new DeclVariable(nombre, tipoVariable);
+    declVariable.setIntermediateCode(iCb.create());
+
     semanticErrorManager.semanticDebug("Variable registrada en TS: " + symbol.toString());
     semanticErrorManager.semanticDebug("Tabla de símbolos tras inserción:\n" + symbolTable.toString());
 
-    RESULT = new DeclVariable(nombre, tipoVariable);
+    RESULT = declVariable;
 :}
 | IDENTIFICADOR:id DELIMLISTA declVariable:dv
 {:
@@ -732,10 +772,20 @@ declVariable ::= IDENTIFICADOR:id DELIMTIPO tipo:t DELIMPUNTOCOMA
     }
     symbolTable.addSymbol(symbol);
 
+    // Código intermedio: declarar variable
+    IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scopeManager.getCurrentScope());
+    Variable var = new Variable(nombre, symbol.getScope());
+    iCb.addQuadruple(Nemonic.DECL, var);
+
+    DeclVariable declVariable = new DeclVariable(nombre, tipoVariable);
+    List<QuadrupleIF> code = new ArrayList<>(dv.getIntermediateCode());
+    code.addAll(iCb.create());
+    declVariable.setIntermediateCode(code);
+
     semanticErrorManager.semanticDebug("Variable registrada en TS: " + symbol.toString());
     semanticErrorManager.semanticDebug("Tabla de símbolos tras inserción:\n" + symbolTable.toString());
 
-    RESULT = new DeclVariable(nombre, tipoVariable);
+    RESULT = declVariable;
 :};
 
 tipo ::= INTEGER
@@ -751,6 +801,11 @@ tipo ::= INTEGER
 
     Tipo tipo = new Tipo();
     tipo.setType(typeInteger);
+
+    IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scope);
+    iCb.addQuadruple(Nemonic.TYPE_USED, "INTEGER"); // Cuarteto simbólico, solo trazabilidad
+
+    tipo.setIntermediateCode(iCb.create());
 
     semanticErrorManager.semanticDebug("Tipo construido: " + tipo.toString());
 
@@ -769,6 +824,11 @@ tipo ::= INTEGER
 
     Tipo tipo = new Tipo();
     tipo.setType(typeBoolean);
+
+    IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scope);
+    iCb.addQuadruple(Nemonic.TYPE_USED, "BOOLEAN"); // Cuarteto simbólico
+
+    tipo.setIntermediateCode(iCb.create());
 
     semanticErrorManager.semanticDebug("Tipo construido: " + tipo.toString());
 
@@ -789,6 +849,11 @@ tipo ::= INTEGER
     Tipo tipo = new Tipo();
     tipo.setType(tipoUsuario);
 
+    IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scope);
+    iCb.addQuadruple(Nemonic.TYPE_USED, nombreTipo); // Trazabilidad útil para RECORDs
+
+    tipo.setIntermediateCode(iCb.create());
+
     semanticErrorManager.semanticDebug("Tipo usuario vinculado: " + tipoUsuario.getName());
     semanticErrorManager.semanticDebug("Tipo construido: " + tipo.toString());
 
@@ -803,6 +868,15 @@ declSubprogramas ::= declSubprograma:ds
     DeclSubprogramas declSubprogramas = new DeclSubprogramas();
     declSubprogramas.addSubprograma((DeclSubprograma) ds);
 
+    // Añadimos el código intermedio del subprograma
+    List<QuadrupleIF> intermediateCode = new ArrayList<>();
+    if (ds.getIntermediateCode() != null) {
+        intermediateCode.addAll(ds.getIntermediateCode());
+    } else {
+        semanticFatalError(SemanticErrors.NPV, 0, 0);
+    }
+    declSubprogramas.setIntermediateCode(intermediateCode);
+
     semanticErrorManager.semanticDebug("Subprograma añadido: " + ds.toString());
     semanticErrorManager.semanticDebug("DeclSubprogramas generado: " + declSubprogramas.toString());
 
@@ -813,6 +887,20 @@ declSubprogramas ::= declSubprograma:ds
     semanticErrorManager.semanticInfo("Procesando subprograma adicional.");
 
     dss.addSubprograma((DeclSubprograma) ds);
+
+    // Añadimos también su código intermedio
+    List<QuadrupleIF> intermediateCode = new ArrayList<>();
+    if (dss.getIntermediateCode() != null) {
+        intermediateCode.addAll(dss.getIntermediateCode());
+    } else {
+        semanticFatalError(SemanticErrors.NPV, 0, 0);
+    }
+    if (ds.getIntermediateCode() != null) {
+        intermediateCode.addAll(ds.getIntermediateCode());
+    } else {
+        semanticFatalError(SemanticErrors.NPV, 0, 0);
+    }
+    dss.setIntermediateCode(intermediateCode);
 
     semanticErrorManager.semanticDebug("Subprograma añadido: " + ds.toString());
     semanticErrorManager.semanticDebug("DeclSubprogramas actualizado: " + dss.toString());
@@ -827,6 +915,15 @@ declSubprograma ::= declFunction:df
     DeclSubprograma declSubprograma = new DeclSubprograma();
     declSubprograma.setFunction((DeclFunction) df);
 
+    // Añadimos el código intermedio de la función
+    List<QuadrupleIF> intermediateCode = new ArrayList<>();
+    if (df.getIntermediateCode() != null) {
+        intermediateCode.addAll(df.getIntermediateCode());
+    } else {
+        semanticFatalError(SemanticErrors.NPV, 0, 0);
+    }
+    declSubprograma.setIntermediateCode(intermediateCode);
+
     semanticErrorManager.semanticDebug("Función añadida al DeclSubprograma: " + df.toString());
 
     RESULT = declSubprograma;
@@ -837,6 +934,15 @@ declSubprograma ::= declFunction:df
 
     DeclSubprograma declSubprograma = new DeclSubprograma();
     declSubprograma.setProcedimiento((DeclProcedimiento) dp);
+
+    // Añadimos el código intermedio del procedimiento
+    List<QuadrupleIF> intermediateCode = new ArrayList<>();
+    if (dp.getIntermediateCode() != null) {
+        intermediateCode.addAll(dp.getIntermediateCode());
+    } else {
+        semanticFatalError(SemanticErrors.NPV, 0, 0);
+    }
+    declSubprograma.setIntermediateCode(intermediateCode);
 
     semanticErrorManager.semanticDebug("Procedimiento añadido al DeclSubprograma: " + dp.toString());
 
@@ -1107,6 +1213,15 @@ cuerpo ::= BEGIN sentencias:s END IDENTIFICADOR:id DELIMPUNTOCOMA
     Cuerpo cuerpo = new Cuerpo();
     cuerpo.setSentencias((Sentencias) s);
 
+    // Generación de código intermedio
+    List<QuadrupleIF> intermediateCode = new ArrayList<>();
+    if (s.getIntermediateCode() != null) {
+        intermediateCode.addAll(s.getIntermediateCode());
+    } else {
+        semanticFatalError(SemanticErrors.NPV, 0, 0);
+    }
+    cuerpo.setIntermediateCode(intermediateCode);
+
     semanticErrorManager.semanticDebug("Cuerpo generado con sentencias: " + cuerpo.toString());
 
     RESULT = cuerpo;
@@ -1137,6 +1252,22 @@ sentencias ::= sentencia:s sentencias:ss
     sentencias.addSentencia((Sentencia) s);
     sentencias.getSentencias().addAll(((Sentencias) ss).getSentencias());
 
+    // Código intermedio de la sentencia añadida
+    List<QuadrupleIF> intermediateCode = new ArrayList<>();
+    if (s.getIntermediateCode() != null) {
+        intermediateCode.addAll(s.getIntermediateCode());
+    } else {
+        semanticFatalError(SemanticErrors.NPV, 0, 0);
+    }
+    sentencias.setIntermediateCode(intermediateCode);
+    // Código intermedio de las sentencias siguientes
+    if (((Sentencias) ss).getIntermediateCode() != null) {
+        sentencias.getIntermediateCode().addAll(((Sentencias) ss).getIntermediateCode());
+    } else {
+        semanticFatalError(SemanticErrors.NPV, 0, 0);
+    }
+    sentencias.setIntermediateCode(intermediateCode);
+
     semanticErrorManager.semanticDebug("Sentencia añadida: " + s.toString());
     semanticErrorManager.semanticDebug("Lista de sentencias actualizada: " + sentencias.toString());
 
@@ -1148,6 +1279,15 @@ sentencias ::= sentencia:s sentencias:ss
 
     Sentencias sentencias = new Sentencias();
     sentencias.addSentencia((Sentencia) s);
+
+    // Código intermedio de la sentencia única
+    List<QuadrupleIF> intermediateCode = new ArrayList<>();
+    if (s.getIntermediateCode() != null) {
+        intermediateCode.addAll(s.getIntermediateCode());
+    } else {
+        semanticFatalError(SemanticErrors.NPV, 0, 0);
+    }
+    sentencias.setIntermediateCode(intermediateCode);
 
     semanticErrorManager.semanticDebug("Sentencia única: " + s.toString());
     semanticErrorManager.semanticDebug("Lista de sentencias creada: " + sentencias.toString());
@@ -1164,6 +1304,15 @@ sentencia ::= sentenciaPutLine:sp
 
     semanticErrorManager.semanticDebug("Sentencia creada: " + sentencia.toString());
 
+    // Generación de código intermedio
+    List<QuadrupleIF> intermediateCode = new ArrayList<>();
+    if (sp.getIntermediateCode() != null) {
+        intermediateCode.addAll(sp.getIntermediateCode());
+    } else {
+        semanticFatalError(SemanticErrors.NPV, 0, 0);
+    }
+    sentencia.setIntermediateCode(intermediateCode);
+
     RESULT = sentencia;
 :}
 | sentenciaAsignacion:sa
@@ -1172,6 +1321,15 @@ sentencia ::= sentenciaPutLine:sp
 
     Sentencia sentencia = new Sentencia();
     sentencia.setSentenciaAsignacion((SentenciaAsignacion) sa);
+
+    // Generación de código intermedio
+    List<QuadrupleIF> intermediateCode = new ArrayList<>();
+    if (sa.getIntermediateCode() != null) {
+        intermediateCode.addAll(sa.getIntermediateCode());
+    } else {
+        semanticFatalError(SemanticErrors.NPV, 0, 0);
+    }
+    sentencia.setIntermediateCode(intermediateCode);
 
     semanticErrorManager.semanticDebug("Sentencia creada: " + sentencia.toString());
 
@@ -1183,6 +1341,15 @@ sentencia ::= sentenciaPutLine:sp
 
     Sentencia sentencia = new Sentencia();
     sentencia.setSentenciaIf((SentenciaIf) si);
+    
+    // Generación de código intermedio
+    List<QuadrupleIF> intermediateCode = new ArrayList<>();
+    if (si.getIntermediateCode() != null) {
+        intermediateCode.addAll(si.getIntermediateCode());
+    } else {
+        semanticFatalError(SemanticErrors.NPV, 0, 0);
+    }
+    sentencia.setIntermediateCode(intermediateCode);
 
     semanticErrorManager.semanticDebug("Sentencia creada: " + sentencia.toString());
 
@@ -1195,6 +1362,15 @@ sentencia ::= sentenciaPutLine:sp
     Sentencia sentencia = new Sentencia();
     sentencia.setSentenciaWhile((SentenciaWhile) sw);
 
+    // Generación de código intermedio
+    List<QuadrupleIF> intermediateCode = new ArrayList<>();
+    if (sw.getIntermediateCode() != null) {
+        intermediateCode.addAll(sw.getIntermediateCode());
+    } else {
+        semanticFatalError(SemanticErrors.NPV, 0, 0);
+    }
+    sentencia.setIntermediateCode(intermediateCode);
+
     semanticErrorManager.semanticDebug("Sentencia creada: " + sentencia.toString());
 
     RESULT = sentencia;
@@ -1206,6 +1382,15 @@ sentencia ::= sentenciaPutLine:sp
     Sentencia sentencia = new Sentencia();
     sentencia.setSentenciaReturn((SentenciaReturn) sr);
 
+    // Generación de código intermedio
+    List<QuadrupleIF> intermediateCode = new ArrayList<>();
+    if (sr.getIntermediateCode() != null) {
+        intermediateCode.addAll(sr.getIntermediateCode());
+    } else {
+        semanticFatalError(SemanticErrors.NPV, 0, 0);
+    }
+    sentencia.setIntermediateCode(intermediateCode);
+
     semanticErrorManager.semanticDebug("Sentencia creada: " + sentencia.toString());
 
     RESULT = sentencia;
@@ -1216,6 +1401,15 @@ sentencia ::= sentenciaPutLine:sp
 
     Sentencia sentencia = new Sentencia();
     sentencia.setSentenciaProcedimiento((SentenciaProcedimiento) spc);
+
+    // Generación de código intermedio
+    List<QuadrupleIF> intermediateCode = new ArrayList<>();
+    if (spc.getIntermediateCode() != null) {
+        intermediateCode.addAll(spc.getIntermediateCode());
+    } else {
+        semanticFatalError(SemanticErrors.NPV, 0, 0);
+    }
+    sentencia.setIntermediateCode(intermediateCode);
 
     semanticErrorManager.semanticDebug("Sentencia creada: " + sentencia.toString());
 
@@ -1238,11 +1432,19 @@ sentenciaAsignacion ::= ref:r ASIGNACION:a expresion:e DELIMPUNTOCOMA
             ((Token) a).getLine(), ((Token) a).getColumn());
     }
 
+    // Construcción de la sentencia
     SentenciaAsignacion sentenciaAsignacion = new SentenciaAsignacion();
     sentenciaAsignacion.setRef(referencia);
     sentenciaAsignacion.setExpresion(expresion);
 
-    semanticErrorManager.semanticDebug("Asignación construida: " + sentenciaAsignacion.toString());
+    // Generación de código intermedio
+    IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scopeManager.getCurrentScope());
+    iCb.addQuadruples(expresion.getIntermediateCode());
+    iCb.addQuadruple(Nemonic.MOVE, referencia.getVariable(), expresion.getTemporal());
+
+    sentenciaAsignacion.setIntermediateCode(iCb.create());
+
+    semanticErrorManager.semanticDebug("Código intermedio generado para asignación: " + sentenciaAsignacion.getIntermediateCode());
 
     RESULT = sentenciaAsignacion;
 :};
@@ -1265,6 +1467,18 @@ ref ::= IDENTIFICADOR:id
 
     Ref ref = new Ref();
     ref.setType(simbolo.getType());
+    ref.setSymbol(simbolo); // Asignamos el símbolo para usarlo en getVariable()
+
+    // Código intermedio: leer valor de variable en un temporal
+    TemporalFactory tf = new TemporalFactory(scope);
+    IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scope);
+    TemporalIF temporal = tf.create();
+
+    Variable var = new Variable(nombre, simbolo.getScope());
+    iCb.addQuadruple(Nemonic.MVP, temporal, var);
+
+    ref.setIntermediateCode(iCb.create());
+    ref.setTemporal(temporal);
 
     semanticErrorManager.semanticDebug("Referencia creada: nombre=" + nombre + ", tipo=" + simbolo.getType().getName());
     semanticErrorManager.semanticDebug("Objeto Ref: " + ref.toString());
@@ -1275,8 +1489,12 @@ ref ::= IDENTIFICADOR:id
 {:
     semanticErrorManager.semanticInfo("Procesando referencia a campo de registro.");
 
+    ExpresionAccesoRegistro acceso = (ExpresionAccesoRegistro) ear;
+
     Ref ref = new Ref();
-    ref.setType(((ExpresionAccesoRegistro) ear).getType());
+    ref.setType(acceso.getType());
+    ref.setTemporal(acceso.getTemporal());
+    ref.setIntermediateCode(acceso.getIntermediateCode());
 
     semanticErrorManager.semanticDebug("Referencia a campo de registro con tipo: " + ref.getType().getName());
     semanticErrorManager.semanticDebug("Objeto Ref: " + ref.toString());
@@ -1635,7 +1853,29 @@ expresion ::= expresion:e1 operadorLogico:op expresion:e2
 
     iCb.addQuadruples(e1.getIntermediateCode());
     iCb.addQuadruples(e2.getIntermediateCode());
-    iCb.addQuadruple(Nemonic.GR, t, t1, t2);  // Se asume 'MAYOR'
+
+    switch (op.getOperacion()) {
+    case "DISTINTO":
+        iCb.addQuadruple(Nemonic.NEQ, t, t1, t2);
+        break;
+    case "IGUAL":
+        iCb.addQuadruple(Nemonic.EQ, t, t1, t2);
+        break;
+    case "MAYOR":
+        iCb.addQuadruple(Nemonic.GR, t, t1, t2);
+        break;
+    case "MENOR":
+        iCb.addQuadruple(Nemonic.LT, t, t1, t2);
+        break;
+    case "MAYORIGUAL":
+        iCb.addQuadruple(Nemonic.GE, t, t1, t2);
+        break;
+    case "MENORIGUAL":
+        iCb.addQuadruple(Nemonic.LE, t, t1, t2);
+        break;
+    default:
+        semanticFatalError("Operador relacional no reconocido: " + op.getOperacion(), 0, 0);
+    }
 
     expr.setType(typeBoolean);
     expr.setTemporal(t);
@@ -1666,13 +1906,31 @@ expresion ::= expresion:e1 operadorLogico:op expresion:e2
 
     iCb.addQuadruples(e1.getIntermediateCode());
     iCb.addQuadruples(e2.getIntermediateCode());
-    iCb.addQuadruple(Nemonic.SUB, t, t1, t2);  // Se asume 'MINUS'
+    
+    switch (op.getOperacion()) {
+    case "SUMA":
+        iCb.addQuadruple(Nemonic.ADD, t, t1, t2);
+        break;
+    case "RESTA":
+        iCb.addQuadruple(Nemonic.SUB, t, t1, t2);
+        break;
+    case "MULT":
+        iCb.addQuadruple(Nemonic.MUL, t, t1, t2);
+        break;
+    case "DIVISION":
+        iCb.addQuadruple(Nemonic.DIV, t, t1, t2);
+        break;
+    default:
+        semanticFatalError("Operador aritmético no reconocido: " + op.getOperacion(), 0, 0);
+    }
 
     expr.setType(typeInteger);
     expr.setTemporal(t);
     expr.setIntermediateCode(iCb.create());
+    semanticErrorManager.semanticDebug("Código intermedio de la expresión: " + iCb.create());
 
     semanticErrorManager.semanticDebug("Expresión aritmética generada: temporal=" + t + ", tipo=INTEGER");
+
 
     RESULT = expr;
 :}
@@ -1859,10 +2117,10 @@ operadorRelacional ::= DISTINTO
                         
 operadorAritmetico ::= MINUS
 {:
-    semanticErrorManager.semanticInfo("Procesando operador aritmético: MINUS");
+    semanticErrorManager.semanticInfo("Procesando operador aritmético: RESTA");
 
     OperadorAritmetico operador = new OperadorAritmetico();
-    operador.setOperacion("MINUS");
+    operador.setOperacion("RESTA");
 
     semanticErrorManager.semanticDebug("OperadorAritmetico creado: " + operador.getOperacion());
 
