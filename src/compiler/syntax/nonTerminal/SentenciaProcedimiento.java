@@ -1,5 +1,7 @@
 package compiler.syntax.nonTerminal;
 
+import compiler.semantic.symbol.SymbolProcedure;
+
 /**
  * Clase que representa una llamada a un procedimiento en el compilador AdaUNED.
  * Contiene el símbolo del procedimiento y una lista de temporales para los
@@ -13,6 +15,7 @@ package compiler.syntax.nonTerminal;
 public class SentenciaProcedimiento extends Sentencia {
 
     private ExprFuncion funcion;
+    private SymbolProcedure procedimiento;
 
     public SentenciaProcedimiento() {
         super();
@@ -24,6 +27,14 @@ public class SentenciaProcedimiento extends Sentencia {
 
     public void setFuncion(ExprFuncion funcion) {
         this.funcion = funcion;
+    }
+
+    public SymbolProcedure getProcedure() {
+        return procedimiento;
+    }
+
+    public void setProcedure(SymbolProcedure procedimiento) {
+        this.procedimiento = procedimiento;
     }
 
     @Override

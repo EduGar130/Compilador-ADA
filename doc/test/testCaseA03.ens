@@ -1,0 +1,78 @@
+; Quadruple - [CONSTANT CIERTO, True, null]
+; CONSTANTE 1 --> reserva espacio para constante
+MOVE #1, CIERTO
+
+; Quadruple - [CONSTANT FALSO, False, null]
+; CONSTANTE 0 --> reserva espacio para constante
+MOVE #0, FALSO
+
+; Quadruple - [CONSTANT UNO, 1, null]
+; CONSTANTE 1 --> reserva espacio para constante
+MOVE #1, UNO
+
+; Quadruple - [INIT null, null, null]
+; Inicio del programa
+
+; Quadruple - [WRSTR CONSTANTES, L_0, null]
+WRSTR /L_0
+
+; Quadruple - [WRSTR CIERTO(true):, L_1, null]
+WRSTR /L_1
+
+; Quadruple - [MV T_3, True, null]
+MOVE #1, /65532
+
+; Quadruple - [WRINT T_3, null, null]
+WRINT /65532
+
+; Quadruple - [WRSTR FALSO(false):, L_2, null]
+WRSTR /L_2
+
+; Quadruple - [MV T_4, False, null]
+MOVE #0, /65531
+
+; Quadruple - [WRINT T_4, null, null]
+WRINT /65531
+
+; Quadruple - [WRSTR UNO(1):, L_3, null]
+WRSTR /L_3
+
+; Quadruple - [MV T_5, 1, null]
+MOVE #1, /65530
+
+; Quadruple - [WRINT T_5, null, null]
+WRINT /65530
+
+; Quadruple - [HALT null, null, null]
+HALT
+
+; Quadruple - [MOVE T_0, 1, null]
+MOVE #1, /65535
+
+; Quadruple - [MOVE CIERTO, T_0, null]
+MOVE /65535, /0
+
+; Quadruple - [MOVE T_1, 0, null]
+MOVE #0, /65534
+
+; Quadruple - [MOVE FALSO, T_1, null]
+MOVE /65534, /0
+
+; Quadruple - [MOVE T_2, 1, null]
+MOVE #1, /65533
+
+; Quadruple - [MOVE UNO, T_2, null]
+MOVE /65533, /0
+
+; Quadruple - [CADENA CONSTANTES, L_0, null]
+L_0 : DATA "CONSTANTES"
+
+; Quadruple - [CADENA CIERTO(true):, L_1, null]
+L_1 : DATA "CIERTO(true):"
+
+; Quadruple - [CADENA FALSO(false):, L_2, null]
+L_2 : DATA "FALSO(false):"
+
+; Quadruple - [CADENA UNO(1):, L_3, null]
+L_3 : DATA "UNO(1):"
+

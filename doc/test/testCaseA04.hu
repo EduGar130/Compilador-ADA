@@ -9,11 +9,11 @@ begin
 
 	Put_line("VARIABLES Y ARITMETICA SIMPLE");
 
-        x := 2-1;
+        x := 5-1;
         Put_line("x(1):");
         Put_line(x);
 
-	t := True;
+	t := False;
         Put_line("t(true):");
         Put_line(t);
 

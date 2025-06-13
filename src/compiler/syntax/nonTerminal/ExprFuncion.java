@@ -2,6 +2,7 @@ package compiler.syntax.nonTerminal;
 
 import compiler.semantic.symbol.SymbolFunction;
 import es.uned.lsi.compiler.intermediate.TemporalIF;
+import es.uned.lsi.compiler.semantic.type.TypeIF;
 
 import java.util.List;
 
@@ -28,6 +29,9 @@ public class ExprFuncion extends NonTerminal {
 
     /** Función asociada a la invocación */
     private SymbolFunction funcion;
+
+    /** Tipo de la expresión de la función */
+    private TypeIF tipo;
 
     /** Constructor por defecto */
     public ExprFuncion() {
@@ -90,6 +94,14 @@ public class ExprFuncion extends NonTerminal {
 
     public void setFuncion(SymbolFunction funcion) {
         this.funcion = funcion;
+    }
+
+    public TypeIF getType() {
+        return tipo;
+    }
+
+    public void setType(TypeIF tipo) {
+        this.tipo = tipo;
     }
 
     @Override

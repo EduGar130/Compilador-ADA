@@ -1,0 +1,63 @@
+; Quadruple - [VARGLOBAL t, 0, null]
+; DECLARACION GLOBAL t --> reserva espacio global
+MOVE #0, /65535
+
+; Quadruple - [VARGLOBAL x, 0, null]
+; DECLARACION GLOBAL x --> reserva espacio global
+MOVE #0, /65534
+
+; Quadruple - [INIT null, null, null]
+; Inicio del programa
+
+; Quadruple - [WRSTR VARIABLES Y ARITMETICA SIMPLE, L_0, null]
+WRSTR /L_0
+
+; Quadruple - [MV T_1, 5, null]
+MOVE #5, /65532
+
+; Quadruple - [MV T_2, 1, null]
+MOVE #1, /65531
+
+; Quadruple - [SUB T_3, T_1, T_2]
+SUB /65532, /65531
+MOVE .A, /65530
+
+; Quadruple - [MOVE x, T_3, null]
+MOVE /65530, /0
+
+; Quadruple - [WRSTR x(1):, L_1, null]
+WRSTR /L_1
+
+; Quadruple - [MV T_4, x, null]
+MOVE /0, /65529
+
+; Quadruple - [WRINT T_4, null, null]
+WRINT /65529
+
+; Quadruple - [MV T_6, false, null]
+MOVE #0, /65527
+
+; Quadruple - [MOVE t, T_6, null]
+MOVE /65527, /0
+
+; Quadruple - [WRSTR t(true):, L_2, null]
+WRSTR /L_2
+
+; Quadruple - [MV T_7, t, null]
+MOVE /0, /65526
+
+; Quadruple - [WRINT T_7, null, null]
+WRINT /65526
+
+; Quadruple - [HALT null, null, null]
+HALT
+
+; Quadruple - [CADENA VARIABLES Y ARITMETICA SIMPLE, L_0, null]
+L_0 : DATA "VARIABLES Y ARITMETICA SIMPLE"
+
+; Quadruple - [CADENA x(1):, L_1, null]
+L_1 : DATA "x(1):"
+
+; Quadruple - [CADENA t(true):, L_2, null]
+L_2 : DATA "t(true):"
+

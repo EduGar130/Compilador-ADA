@@ -212,12 +212,70 @@ program ::=
 
         semanticErrorManager.semanticInfo("Programa analizado correctamente.");
         semanticErrorManager.semanticDebug("AXIOM: " + ax.toString());
+        List<QuadrupleIF> intermediateCode = ax.getIntermediateCode();
 
-        List intermediateCode = ax.getIntermediateCode();
         if (intermediateCode != null) {
+            List<ScopeIF> scopes = scopeManager.getAllScopes();
+            ExecutionEnvironmentIF environment = new ExecutionEnvironmentEns2001();
             semanticErrorManager.semanticInfo("Generamos output .ens");
             semanticErrorManager.semanticDebug("Código intermedio generado: " + intermediateCode);
-            finalCodeFactory.create(intermediateCode);
+            int direccionEstatica = environment.getMemorySize();
+            List<SymbolIF> simbolos = scopeManager.getCurrentScope().getSymbolTable().getSymbols();
+            for(SymbolIF symbol : simbolos) {
+                if (symbol instanceof SymbolVariable) {
+                    SymbolVariable var = (SymbolVariable) symbol;
+                    if (var.getAddress() >= direccionEstatica) {
+                        semanticFatalError("Dirección de variable fuera de rango: " + var.getName(), 0, 0);
+                    }
+                    var.setAddress(direccionEstatica);
+                    direccionEstatica -= var.getType().getSize();
+                }
+            }
+            List<TemporalIF> temporales = scopeManager.getCurrentScope().getTemporalTable().getTemporals();
+            for(TemporalIF temporal : temporales)
+            {
+                if(temporal instanceof Temporal) {
+                    Temporal temp = (Temporal) temporal;
+                    if (temp.getAddress() >= direccionEstatica) {
+                        semanticFatalError("Dirección de temporal fuera de rango: " + temp.getName(), 0, 0);
+                    }
+                    temp.setAddress(direccionEstatica);
+                    direccionEstatica -= temp.getSize();
+                }
+            }
+            semanticErrorManager.semanticDebug("Dirección estática inicial: " + environment.getMemorySize());
+            semanticErrorManager.semanticDebug("Dirección estática final: " + direccionEstatica);
+            for(ScopeIF scope: scopes) {
+                IntermediateCodeBuilder builder = new IntermediateCodeBuilder(scope);
+                if(scope.getLevel() == 0) {
+                    List<SymbolIF> symbols = scope.getSymbolTable().getSymbols();
+                    for(SymbolIF symbol : symbols) {
+                        if (symbol instanceof SymbolVariable) {
+                        int direccion = ((SymbolVariable) symbol).getAddress();
+                            Variable variable = new Variable((SymbolVariable) symbol);
+                            builder.addQuadruple(Nemonic.VARGLOBAL, variable, 0);
+                        }
+                        if (symbol instanceof SymbolConstant) {
+                            SymbolConstant constant = (SymbolConstant) symbol;
+                            Value value = new Value(constant.getValue());
+                            builder.addQuadruple(Nemonic.CONSTANT, constant.getName(), value, null);
+                        }
+                    }
+                }
+                builder.addQuadruples(ax.getIntermediateCode());
+                Integer labelCount = 0;
+                for(QuadrupleIF quad : ax.getIntermediateCode()) {
+                    if(quad.getOperation() == Nemonic.WRSTR) {
+                        LabelFactory labelFactory = new LabelFactory();
+                        LabelIF labelName = labelFactory.create((labelCount++).toString());
+                        quad.setFirstOperand(labelName);
+                        builder.addQuadruple(Nemonic.CADENA, quad.getResult(), labelName, null);
+                    }
+                }
+                ax.setIntermediateCode(builder.create());
+            }
+            finalCodeFactory.setEnvironment(environment);
+            finalCodeFactory.create(ax.getIntermediateCode());
         } else {
             semanticFatalError(SemanticErrors.NPV, 0, 0);
         }
@@ -581,7 +639,7 @@ literal ::= ENTERO:ent
     // Código intermedio: asignamos el valor booleano al temporal
     IntermediateCodeBuilder builder = new IntermediateCodeBuilder(scopeManager.getCurrentScope());
 
-    Value value = new Value(bool.getLexema()); // "True" o "False"
+    Value value = new Value(bool.getLexema().equals("True") ? 1 : 0);
     builder.addQuadruple(Nemonic.MOVE, literal.getTemporal(), value, null);
 
     // Asociamos el código intermedio al literal
@@ -1215,11 +1273,13 @@ cuerpo ::= BEGIN sentencias:s END IDENTIFICADOR:id DELIMPUNTOCOMA
 
     // Generación de código intermedio
     List<QuadrupleIF> intermediateCode = new ArrayList<>();
+    intermediateCode.add(new Quadruple(Nemonic.INIT)); // Inicio del programa
     if (s.getIntermediateCode() != null) {
         intermediateCode.addAll(s.getIntermediateCode());
     } else {
         semanticFatalError(SemanticErrors.NPV, 0, 0);
     }
+    intermediateCode.add(new Quadruple(Nemonic.HALT)); // Fin del programa
     cuerpo.setIntermediateCode(intermediateCode);
 
     semanticErrorManager.semanticDebug("Cuerpo generado con sentencias: " + cuerpo.toString());
@@ -1234,7 +1294,8 @@ cuerpo ::= BEGIN sentencias:s END IDENTIFICADOR:id DELIMPUNTOCOMA
     cuerpo.setSentencias(null);
 
     IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scopeManager.getCurrentScope());
-    iCb.addQuadruple(Nemonic.RET);
+    iCb.addQuadruple(Nemonic.INIT); // Inicio del programa
+    iCb.addQuadruple(Nemonic.HALT); // Fin del programa
 
     cuerpo.setIntermediateCode(iCb.create());
 
@@ -1475,7 +1536,7 @@ ref ::= IDENTIFICADOR:id
     TemporalIF temporal = tf.create();
 
     Variable var = new Variable(nombre, simbolo.getScope());
-    iCb.addQuadruple(Nemonic.MVP, temporal, var);
+    iCb.addQuadruple(Nemonic.MV, temporal, var);
 
     ref.setIntermediateCode(iCb.create());
     ref.setTemporal(temporal);
@@ -1701,6 +1762,7 @@ sentenciaReturn ::= RETURN expresion:e DELIMPUNTOCOMA
     */
 
     // Generación de código intermedio
+    /*
     IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scope);
     iCb.addQuadruples(expr.getIntermediateCode());
     iCb.addQuadruple(Nemonic.RET, expr.getTemporal());
@@ -1708,6 +1770,7 @@ sentenciaReturn ::= RETURN expresion:e DELIMPUNTOCOMA
     sentenciaReturn.setIntermediateCode(iCb.create());
 
     semanticErrorManager.semanticDebug("Código intermedio RETURN generado con temporal: " + expr.getTemporal());
+    */
     semanticErrorManager.semanticDebug("Objeto SentenciaReturn generado: " + sentenciaReturn.toString());
 
     RESULT = sentenciaReturn;
@@ -1732,12 +1795,10 @@ sentenciaProcedimiento ::= IDENTIFICADOR:id PARENTESISAP listaParametrosInvocaci
     List<SymbolParameter> parametrosFormales = procedimiento.getParameterList();
     List<Expresion> parametrosActuales = ((ListaParametrosInvocacion)lpi).getParametros();
 
-    // Validar número de parámetros
     if (parametrosFormales.size() != parametrosActuales.size()) {
         semanticFatalError("Número incorrecto de parámetros en llamada a procedimiento '" + id.getLexema() + "'.", id.getLine(), id.getColumn());
     }
 
-    // Validar tipo de parámetros
     for (int i = 0; i < parametrosFormales.size(); i++) {
         TypeIF tipoFormal = parametrosFormales.get(i).getType();
         TypeIF tipoActual = parametrosActuales.get(i).getType();
@@ -1747,24 +1808,11 @@ sentenciaProcedimiento ::= IDENTIFICADOR:id PARENTESISAP listaParametrosInvocaci
                                tipoFormal.getName() + ", recibido: " + tipoActual.getName(), id.getLine(), id.getColumn());
         }
 
-        semanticErrorManager.semanticDebug("Parámetro " + (i + 1) + ": OK. Tipo=" + tipoActual.getName() +
-                                            ", Temporal=" + parametrosActuales.get(i).getTemporal());
+        semanticErrorManager.semanticDebug("Parámetro " + (i + 1) + ": OK. Tipo=" + tipoActual.getName());
     }
-
-    // Generación de código intermedio
-    IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scope);
-
-    for (Expresion parametro : parametrosActuales) {
-        iCb.addQuadruples(parametro.getIntermediateCode());
-        iCb.addQuadruple(Nemonic.PARAM, parametro.getTemporal());
-    }
-
-    iCb.addQuadruple(Nemonic.CALL, procedimiento);
 
     SentenciaProcedimiento sentenciaProcedimiento = new SentenciaProcedimiento();
-    sentenciaProcedimiento.setIntermediateCode(iCb.create());
-
-    semanticErrorManager.semanticDebug("Llamada a procedimiento con parámetros generada correctamente: " + procedimiento.getName());
+    sentenciaProcedimiento.setProcedure(procedimiento);
 
     RESULT = sentenciaProcedimiento;
 :}
@@ -1788,13 +1836,8 @@ sentenciaProcedimiento ::= IDENTIFICADOR:id PARENTESISAP listaParametrosInvocaci
         semanticFatalError("El procedimiento '" + id.getLexema() + "' requiere parámetros.", id.getLine(), id.getColumn());
     }
 
-    IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scope);
-    iCb.addQuadruple(Nemonic.CALL, procedimiento);
-
     SentenciaProcedimiento sentenciaProcedimiento = new SentenciaProcedimiento();
-    sentenciaProcedimiento.setIntermediateCode(iCb.create());
-
-    semanticErrorManager.semanticDebug("Llamada a procedimiento sin parámetros generada correctamente: " + procedimiento.getName());
+    sentenciaProcedimiento.setProcedure(procedimiento);
 
     RESULT = sentenciaProcedimiento;
 :};
@@ -1821,7 +1864,7 @@ expresion ::= expresion:e1 operadorLogico:op expresion:e2
 
     iCb.addQuadruples(e1.getIntermediateCode());
     iCb.addQuadruples(e2.getIntermediateCode());
-    iCb.addQuadruple(Nemonic.AND, t, t1, t2);  // Se asume operador 'AND'
+    iCb.addQuadruple(Nemonic.AND, t, t1, t2);  // Solo tenemos un operador logico posible 'AND'
 
     expr.setType(typeBoolean);
     expr.setTemporal(t);
@@ -1858,20 +1901,8 @@ expresion ::= expresion:e1 operadorLogico:op expresion:e2
     case "DISTINTO":
         iCb.addQuadruple(Nemonic.NEQ, t, t1, t2);
         break;
-    case "IGUAL":
-        iCb.addQuadruple(Nemonic.EQ, t, t1, t2);
-        break;
     case "MAYOR":
         iCb.addQuadruple(Nemonic.GR, t, t1, t2);
-        break;
-    case "MENOR":
-        iCb.addQuadruple(Nemonic.LT, t, t1, t2);
-        break;
-    case "MAYORIGUAL":
-        iCb.addQuadruple(Nemonic.GE, t, t1, t2);
-        break;
-    case "MENORIGUAL":
-        iCb.addQuadruple(Nemonic.LE, t, t1, t2);
         break;
     default:
         semanticFatalError("Operador relacional no reconocido: " + op.getOperacion(), 0, 0);
@@ -1908,17 +1939,11 @@ expresion ::= expresion:e1 operadorLogico:op expresion:e2
     iCb.addQuadruples(e2.getIntermediateCode());
     
     switch (op.getOperacion()) {
-    case "SUMA":
-        iCb.addQuadruple(Nemonic.ADD, t, t1, t2);
-        break;
     case "RESTA":
         iCb.addQuadruple(Nemonic.SUB, t, t1, t2);
         break;
     case "MULT":
         iCb.addQuadruple(Nemonic.MUL, t, t1, t2);
-        break;
-    case "DIVISION":
-        iCb.addQuadruple(Nemonic.DIV, t, t1, t2);
         break;
     default:
         semanticFatalError("Operador aritmético no reconocido: " + op.getOperacion(), 0, 0);
@@ -2048,8 +2073,8 @@ operando ::= BOOLEANO:bool
 
    if (simbolo instanceof SymbolVariable) {
        Variable var = new Variable(id.getLexema(), simbolo.getScope());
-       iCb.addQuadruple(Nemonic.MVP, temporal, var);
-       semanticErrorManager.semanticDebug("Identificador es una variable: MVP " + temporal + " <- " + var);
+       iCb.addQuadruple(Nemonic.MV, temporal, var);
+       semanticErrorManager.semanticDebug("Identificador es una variable: MV " + temporal + " <- " + var);
    } else if (simbolo instanceof SymbolConstant) {
        Value valor = new Value(((SymbolConstant) simbolo).getValue());
        iCb.addQuadruple(Nemonic.MV, temporal, valor);
@@ -2252,7 +2277,7 @@ exprFuncion ::= IDENTIFICADOR:id PARENTESISAP listaParametrosInvocacion:lpi PARE
     SymbolBase simbolo = (SymbolBase) scopeManager.searchSymbol(id.getLexema());
 
     if (simbolo == null) {
-        semanticErrorManager.semanticDebug("Tabla de símbolos actual: " + scopeManager.getCurrentScope().getSymbolTable());
+        semanticErrorManager.semanticDebug("Tabla de símbolos actual: " + scope.getSymbolTable());
         semanticFatalError("Función no declarada: " + id.getLexema(), id.getLine(), id.getColumn());
     }
     if (!(simbolo instanceof SymbolFunction)) {
@@ -2275,31 +2300,12 @@ exprFuncion ::= IDENTIFICADOR:id PARENTESISAP listaParametrosInvocacion:lpi PARE
             semanticFatalError("Tipo incorrecto en el parámetro " + (i + 1) + " de la función '" + id.getLexema() + "'.", id.getLine(), id.getColumn());
         }
 
-        semanticErrorManager.semanticDebug("Parámetro " + (i + 1) + ": OK. Tipo=" + tipoActual.getName() +
-                                            ", Temporal=" + parametrosActuales.get(i).getTemporal());
+        semanticErrorManager.semanticDebug("Parámetro " + (i + 1) + ": OK. Tipo=" + tipoActual.getName());
     }
 
     ExprFuncion exprFuncion = new ExprFuncion();
     exprFuncion.setFuncion(function);
-
-    IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scope);
-
-    for (Expresion parametro : parametrosActuales) {
-        iCb.addQuadruples(parametro.getIntermediateCode());
-        iCb.addQuadruple(Nemonic.PARAM, parametro.getTemporal());
-    }
-
-    iCb.addQuadruple(Nemonic.CALL, function);
-
-    // Añadir instrucción para mover el valor de retorno
-    TemporalFactory tf = new TemporalFactory(scope);
-    TemporalIF tempRet = tf.create();
-    iCb.addQuadruple(Nemonic.MV, tempRet, new Retval());
-
-    exprFuncion.setTemporal(tempRet);
-    exprFuncion.setIntermediateCode(iCb.create());
-
-    semanticErrorManager.semanticDebug("Llamada a función generada: retorno -> temporal " + tempRet);
+    exprFuncion.setType(function.getType());
 
     RESULT = exprFuncion;
 :}
@@ -2325,19 +2331,7 @@ exprFuncion ::= IDENTIFICADOR:id PARENTESISAP listaParametrosInvocacion:lpi PARE
 
     ExprFuncion exprFuncion = new ExprFuncion();
     exprFuncion.setFuncion(function);
-
-    IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scope);
-    iCb.addQuadruple(Nemonic.CALL, function);
-
-    // Movimiento del valor de retorno
-    TemporalFactory tf = new TemporalFactory(scope);
-    TemporalIF tempRet = tf.create();
-    iCb.addQuadruple(Nemonic.MV, tempRet, new Retval());
-
-    exprFuncion.setTemporal(tempRet);
-    exprFuncion.setIntermediateCode(iCb.create());
-
-    semanticErrorManager.semanticDebug("Llamada a función generada: retorno -> temporal " + tempRet);
+    exprFuncion.setType(function.getType());
 
     RESULT = exprFuncion;
 :};

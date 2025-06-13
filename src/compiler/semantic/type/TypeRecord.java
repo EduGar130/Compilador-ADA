@@ -78,7 +78,11 @@ public class TypeRecord extends TypeBase {
      */
     @Override
     public int getSize() {
-        return campos.size();
+        int total = 0;
+        for (TypeIF tipo : campos.values()) {
+            total += tipo.getSize();
+        }
+        return total;
     }
 
     /**

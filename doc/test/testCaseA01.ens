@@ -1,0 +1,6 @@
+; Quadruple - [INIT null, null, null]
+; Inicio del programa
+
+; Quadruple - [HALT null, null, null]
+HALT
+

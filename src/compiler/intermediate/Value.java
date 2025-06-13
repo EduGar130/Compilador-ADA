@@ -27,6 +27,15 @@ public class Value
      */
     @Override
     public final Object getValue() {
+        if (value instanceof Boolean) {
+            return ((Boolean) value) ? 1 : 0;
+        }
+        if (value.toString().equals("True")) {
+            return 1;
+        }
+        if (value.toString().equals("False")) {
+            return 0;
+        }
         return value;
     }
 

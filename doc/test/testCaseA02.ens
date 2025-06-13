@@ -1,0 +1,18 @@
+; Quadruple - [INIT null, null, null]
+; Inicio del programa
+
+; Quadruple - [WRSTR hola , L_0, null]
+WRSTR /L_0
+
+; Quadruple - [WRSTR mundo, L_1, null]
+WRSTR /L_1
+
+; Quadruple - [HALT null, null, null]
+HALT
+
+; Quadruple - [CADENA hola , L_0, null]
+L_0 : DATA "hola "
+
+; Quadruple - [CADENA mundo, L_1, null]
+L_1 : DATA "mundo"
+

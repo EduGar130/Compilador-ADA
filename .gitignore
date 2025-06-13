@@ -8,3 +8,4 @@ src/compiler/syntax/parser.java
 doc/specs/parser.txt
 src/compiler/syntax/nonTerminal.zip
 src/compiler/lexical/Scanner.java
+doc/test

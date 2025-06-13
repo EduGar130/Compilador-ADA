@@ -16,6 +16,6 @@ public class TypeInteger extends TypeBase {
     @Override
     public int getSize() {
         // Tamaño típico de entero en memoria
-        return 4;
+        return 1;
     }
 }
