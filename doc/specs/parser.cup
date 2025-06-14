@@ -53,6 +53,46 @@ action code {:
         sError.setColumn(column);
         semanticErrorManager.semanticFatalError(sError);
     }
+
+    // Método para la búsqueda recursiva de un return válido en las sentencias de un bloque.
+    private boolean contieneReturnValido(Sentencia sentencia, TypeIF tipoRetornoEsperado) {
+        if (sentencia.getSentenciaReturn() != null) {
+            SentenciaReturn sentenciaReturn = sentencia.getSentenciaReturn();
+            Expresion expresion = sentenciaReturn.getExpresion();
+            if(expresion != null && tipoRetornoEsperado.equals(expresion.getType())){
+                // Si la expresión de retorno es del tipo esperado, es un return válido
+                return true;
+            } else {
+                // Si hay una expresión pero no coincide con el tipo esperado, no es válido
+                semanticErrorManager.semanticFatalError("Return inválido encontrado. Return inválido encontrado: " + (expresion != null ? expresion.getType() : "null") + ", Tipo de retorno esperado: " + tipoRetornoEsperado.getName());
+                return false;
+            }
+        } else if (sentencia.getSentenciaIf() != null) {
+            SentenciaIf ifStmt = sentencia.getSentenciaIf();
+            boolean thenTieneReturn = false;
+            boolean elseTieneReturn = false;
+            if (ifStmt.getCuerpoThen() != null) {
+                thenTieneReturn = ifStmt.getCuerpoThen().getSentencias()
+                    .stream().anyMatch(s -> contieneReturnValido(s, tipoRetornoEsperado));
+            }
+            if (ifStmt.getCuerpoElse() != null) {
+                elseTieneReturn = ifStmt.getCuerpoElse().getSentencias()
+                    .stream().anyMatch(s -> contieneReturnValido(s, tipoRetornoEsperado));
+            } else {
+                // Si no hay cuerpo else no valoramos su retorno
+                elseTieneReturn = true; // Consideramos que no afecta al retorno
+            }
+            // Solo consideramos válido si ambas ramas tienen return
+            return thenTieneReturn && elseTieneReturn;
+        } else if (sentencia.getSentenciaWhile() != null) {
+            SentenciaWhile whileStmt = sentencia.getSentenciaWhile();
+            if (whileStmt.getCuerpo() != null) {
+                return whileStmt.getCuerpo().getSentencias()
+                    .stream().anyMatch(s -> contieneReturnValido(s, tipoRetornoEsperado));
+            }
+        }
+        return false;
+    }
 :}	
 
 parser code {:
@@ -261,7 +301,6 @@ program ::=
                             builder.addQuadruple(Nemonic.CONSTANT, constant.getName(), value, null);
                         }
                     }
-                }
                 builder.addQuadruples(ax.getIntermediateCode());
                 Integer labelCount = 0;
                 for(QuadrupleIF quad : ax.getIntermediateCode()) {
@@ -273,6 +312,7 @@ program ::=
                     }
                 }
                 ax.setIntermediateCode(builder.create());
+                }
             }
             finalCodeFactory.setEnvironment(environment);
             finalCodeFactory.create(ax.getIntermediateCode());
@@ -887,7 +927,6 @@ tipo ::= INTEGER
     iCb.addQuadruple(Nemonic.TYPE_USED, "BOOLEAN"); // Cuarteto simbólico
 
     tipo.setIntermediateCode(iCb.create());
-
     semanticErrorManager.semanticDebug("Tipo construido: " + tipo.toString());
 
     RESULT = tipo;
@@ -1057,6 +1096,23 @@ declaracionesFunction:df cuerpoFunction:cf
             semanticErrorManager.semanticDebug("Parámetro añadido: " + symbolParameter.toString());
         }
     }
+    // Comprobar que la función contiene una sentencia return con tipo compatible
+    TypeIF tipoRetornoEsperado = declFunction.getTipoRetorno().getType();
+    boolean tieneReturnCorrecto = false;
+
+    // Recorremos las sentencias del cuerpo de la función
+    for (Sentencia sentencia : ((CuerpoFunction) cf).getSentencias().getSentencias()) {
+        semanticErrorManager.semanticDebug("Procesando sentenciaa: " + sentencia.toString());
+        if (contieneReturnValido(sentencia, tipoRetornoEsperado)) {
+            semanticErrorManager.semanticDebug("Return válido encontrado en la sentencia: " + sentencia.toString());
+            tieneReturnCorrecto = true;
+            break;
+        }
+    }
+    // Si no se encontró un return válido, lanzar error semántico
+    if (!tieneReturnCorrecto) {
+        semanticFatalError("La función '" + declFunction.getNombre() + "' no contiene un return válido con tipo '" + tipoRetornoEsperado.getName() + "'.", id.getLine(), id.getColumn());
+    }
 
     //Cerrar el ámbito de la función
     scopeManager.closeScope();
@@ -1071,7 +1127,7 @@ declaracionesFunction:df cuerpoFunction:cf
     fatherSymbolTable.addSymbol(new SymbolFunction(fatherScope, declFunction.getNombre(), declFunction.getTipoRetorno().getType(), parametros));
 
     semanticErrorManager.semanticDebug("Función añadida a la tabla de símbolos del ámbito padre: " + declFunction.getNombre());
-
+    
     RESULT = declFunction;
 :}
 | FUNCTION IDENTIFICADOR:id PARENTESISAP PARENTESISCIERRE RETURN tipoRetorno:tr IS declaracionesFunction:df cuerpoFunction:cf
@@ -1091,7 +1147,25 @@ declaracionesFunction:df cuerpoFunction:cf
 
     semanticErrorManager.semanticDebug("Función declarada: " + declFunction.toString());
 
-    //Cerrar el ámbito de la función
+    // Comprobar que la función contiene una sentencia return con tipo compatible
+    TypeIF tipoRetornoEsperado = declFunction.getTipoRetorno().getType();
+    boolean tieneReturnCorrecto = false;
+
+    // Recorremos las sentencias del cuerpo de la función
+    for (Sentencia sentencia : ((CuerpoFunction) cf).getSentencias().getSentencias()) {
+        semanticErrorManager.semanticDebug("Procesando sentenciaa: " + sentencia.toString());
+        if (contieneReturnValido(sentencia, tipoRetornoEsperado)) {
+            semanticErrorManager.semanticDebug("Return válido encontrado en la sentencia: " + sentencia.toString());
+            tieneReturnCorrecto = true;
+            break;
+        }
+    }
+    // Si no se encontró un return válido, lanzar error semántico
+    if (!tieneReturnCorrecto) {
+        semanticFatalError("La función '" + declFunction.getNombre() + "' no contiene un return válido con tipo '" + tipoRetornoEsperado.getName() + "'.", id.getLine(), id.getColumn());
+    }
+
+    // Cerrar el ámbito de la función
     scopeManager.closeScope();
     semanticErrorManager.semanticDebug("Ámbito de la función cerrado correctamente.");
     RESULT = declFunction;
@@ -1616,6 +1690,10 @@ sentenciaIf ::= IF expresion:e THEN sentencias:st END IF DELIMPUNTOCOMA
     if (!condicion.getType().equals(typeBoolean)) {
         semanticFatalError("La condición del IF debe ser de tipo BOOLEAN.", 0, 0);
     }
+    // Validación dead code
+    if (condicion.isDeadCode()) {
+        semanticErrorManager.semanticError("La condición: " + condicion.toString() + "del IF produce dead code, una de las sentencias no se evaluara.");
+    }
 
     SentenciaIf sentenciaIf = new SentenciaIf();
     sentenciaIf.setCondicion(condicion);
@@ -1868,6 +1946,7 @@ expresion ::= expresion:e1 operadorLogico:op expresion:e2
 
     expr.setType(typeBoolean);
     expr.setTemporal(t);
+    expr.setDeadCode(e1.isDeadCode() && e2.isDeadCode());
     expr.setIntermediateCode(iCb.create());
 
     semanticErrorManager.semanticDebug("Expresión lógica generada: temporal=" + t + ", tipo=BOOLEAN");
@@ -1911,6 +1990,7 @@ expresion ::= expresion:e1 operadorLogico:op expresion:e2
     expr.setType(typeBoolean);
     expr.setTemporal(t);
     expr.setIntermediateCode(iCb.create());
+    expr.setDeadCode(e1.isDeadCode() && e2.isDeadCode());
 
     semanticErrorManager.semanticDebug("Expresión relacional generada: temporal=" + t + ", tipo=BOOLEAN");
 
@@ -1952,6 +2032,7 @@ expresion ::= expresion:e1 operadorLogico:op expresion:e2
     expr.setType(typeInteger);
     expr.setTemporal(t);
     expr.setIntermediateCode(iCb.create());
+    expr.setDeadCode(e1.isDeadCode() && e2.isDeadCode());
     semanticErrorManager.semanticDebug("Código intermedio de la expresión: " + iCb.create());
 
     semanticErrorManager.semanticDebug("Expresión aritmética generada: temporal=" + t + ", tipo=INTEGER");
@@ -2004,7 +2085,7 @@ expresion ::= expresion:e1 operadorLogico:op expresion:e2
     expr.setType(((Operando)o).getType());
     expr.setTemporal(((Operando)o).getTemporal());
     expr.setIntermediateCode(((Operando)o).getIntermediateCode());
-
+    expr.setDeadCode(((Operando)o).isDeadCode());
     semanticErrorManager.semanticDebug("Expresión operando: tipo=" + expr.getType().getName() + ", temporal=" + expr.getTemporal());
 
     RESULT = expr;
@@ -2045,6 +2126,7 @@ operando ::= BOOLEANO:bool
    Operando operando = new Operando();
    operando.setTemporal(temporal);
    operando.setType(typeBoolean);
+   operando.setDeadCode(true);
    operando.setIntermediateCode(iCb.create());
 
    semanticErrorManager.semanticDebug("Operando BOOLEANO generado: temporal=" + temporal + ", valor=" + valor);
@@ -2084,7 +2166,7 @@ operando ::= BOOLEANO:bool
    }
 
    operando.setIntermediateCode(iCb.create());
-
+   operando.setDeadCode(false);
    semanticErrorManager.semanticDebug("Operando IDENTIFICADOR generado: tipo=" + simbolo.getType().getName() + ", temporal=" + temporal);
 
    RESULT = operando;
@@ -2110,6 +2192,7 @@ operando ::= BOOLEANO:bool
    Operando operando = new Operando();
    operando.setTemporal(temporal);
    operando.setType(typeInteger);
+   operando.setDeadCode(true); // Asumimos que es dead code por defecto
    operando.setIntermediateCode(iCb.create());
 
    semanticErrorManager.semanticDebug("Operando ENTERO generado: valor=" + valor + ", temporal=" + temporal);
@@ -2297,7 +2380,7 @@ exprFuncion ::= IDENTIFICADOR:id PARENTESISAP listaParametrosInvocacion:lpi PARE
         TypeIF tipoActual = parametrosActuales.get(i).getType();
 
         if (!tipoFormal.equals(tipoActual)) {
-            semanticFatalError("Tipo incorrecto en el parámetro " + (i + 1) + " de la función '" + id.getLexema() + "'.", id.getLine(), id.getColumn());
+            semanticFatalError("Tipo incorrecto en el parámetro " + (i + 1) + " de la función '" + id.getLexema() +  "'. Se esperaba " + tipoFormal.getName() + " pero se recibió " + tipoActual.getName() + ".", id.getLine(), id.getColumn());
         }
 
         semanticErrorManager.semanticDebug("Parámetro " + (i + 1) + ": OK. Tipo=" + tipoActual.getName());

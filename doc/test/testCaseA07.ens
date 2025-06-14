@@ -1,39 +1,72 @@
-NOP
-; WRSTR 0
-LOAD 5
-STORE 1
-LOAD 1
-STORE 0
-0:
-LOADI 0
-STORE 2
-LOAD 1
-STORE 3
-LOAD 2
-SUB 3
-JLE LBL_FALSE_4
-LOADI 1
-STORE 4
-BR LBL_END_4
-LBL_FALSE_4:
-LOADI 0
-STORE 4
-LBL_END_4:
-LOAD L_1
-JZ 0
-LOADI 0
-STORE 5
-LOAD 0
-OUT
-LOADI 0
-STORE 7
-LOAD 1
-STORE 8
-LOAD 7
-SUB 8
-STORE 9
-LOAD 9
-STORE 0
-BR 0
-0:
+; Quadruple - [VARGLOBAL x, 0, null]
+; DECLARACION GLOBAL x --> reserva espacio global
+MOVE #0, /65535
+
+; Quadruple - [INIT null, null, null]
+; Inicio del programa
+
+; Quadruple - [WRSTR CONTROL FLUJO WHILE, L_0, null]
+WRSTR /L_0
+
+; Quadruple - [MV T_1, 5, null]
+MOVE #5, /65533
+
+; Quadruple - [MOVE x, T_1, null]
+MOVE /65533, /0
+
+; Quadruple - [INL L_0, null, null]
+L_0:
+
+; Quadruple - [MV T_2, x, null]
+MOVE /0, /65532
+
+; Quadruple - [MV T_3, 1, null]
+MOVE #1, /65531
+
+; Quadruple - [GR T_4, T_2, T_3]
+LOAD A, /65532
+LOAD B, /65531
+CMP A, B
+BG GR_TRUE_0
+MOVE A, #0
+BR GR_END_1
+GR_TRUE_0:
+MOVE A, #1
+GR_END_1:
+STORE A, /65530
+
+; Quadruple - [BRF T_4, L_1, null]
+LOAD A, /65530
+JZ A, L_1
+
+; Quadruple - [MV T_5, x, null]
+MOVE /0, /65529
+
+; Quadruple - [WRINT T_5, null, null]
+WRINT /65529
+
+; Quadruple - [MV T_7, x, null]
+MOVE /0, /65527
+
+; Quadruple - [MV T_8, 1, null]
+MOVE #1, /65526
+
+; Quadruple - [SUB T_9, T_7, T_8]
+SUB /65527, /65526
+MOVE .A, /65525
+
+; Quadruple - [MOVE x, T_9, null]
+MOVE /65525, /0
+
+; Quadruple - [BR L_0, null, null]
+JUMP L_0
+
+; Quadruple - [INL L_1, null, null]
+L_1:
+
+; Quadruple - [HALT null, null, null]
 HALT
+
+; Quadruple - [CADENA CONTROL FLUJO WHILE, L_0, null]
+L_0 : DATA "CONTROL FLUJO WHILE"
+

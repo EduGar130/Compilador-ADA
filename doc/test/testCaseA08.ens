@@ -1,0 +1,24 @@
+; Quadruple - [VARGLOBAL a, 0, null]
+; DECLARACION GLOBAL a --> reserva espacio global
+MOVE #0, /65535
+
+; Quadruple - [VARGLOBAL b, 0, null]
+; DECLARACION GLOBAL b --> reserva espacio global
+MOVE #0, /65534
+
+; Quadruple - [VARGLOBAL z, 0, null]
+; DECLARACION GLOBAL z --> reserva espacio global
+MOVE #0, /65533
+
+; Quadruple - [INIT null, null, null]
+; Inicio del programa
+
+; Quadruple - [WRSTR SUBPROGRAMAS FUNCIONES, L_0, null]
+WRSTR /L_0
+
+; Quadruple - [HALT null, null, null]
+HALT
+
+; Quadruple - [CADENA SUBPROGRAMAS FUNCIONES, L_0, null]
+L_0 : DATA "SUBPROGRAMAS FUNCIONES"
+

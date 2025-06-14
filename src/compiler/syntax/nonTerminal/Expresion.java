@@ -25,6 +25,9 @@ public class Expresion extends NonTerminal {
     /** Tipo de la expresión */
     private TypeIF type;
 
+    /** Indica si la expresión es código muerto (dead code) */
+    private boolean isDeadCode;
+
     /** Temporal donde se guarda el resultado */
     private TemporalIF temporal;
 
@@ -57,6 +60,14 @@ public class Expresion extends NonTerminal {
 
     public void setIntermediateCode(List<QuadrupleIF> intermediateCode) {
         this.intermediateCode = intermediateCode;
+    }
+
+    public boolean isDeadCode() {
+        return isDeadCode;
+    }
+
+    public void setDeadCode(boolean deadCode) {
+        isDeadCode = deadCode;
     }
 
     @Override

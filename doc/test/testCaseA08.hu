@@ -23,7 +23,7 @@ begin
 	a := true;
 	return x-y;	
 
-end resta;
+end resta2;
 
 
 begin

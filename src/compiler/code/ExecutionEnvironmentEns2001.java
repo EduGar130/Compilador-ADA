@@ -120,9 +120,9 @@ public class ExecutionEnvironmentEns2001
             case Nemonic.AND:
                 return translateAnd(res, op1, op2);
             case Nemonic.BR:
-                return translateBr(op1);
+                return translateBr(res);
             case Nemonic.BRF:
-                return translateBrf(op1, op2);
+                return translateBrf(op1, res);
             case Nemonic.CALL:
                 return translateCall(op1);
             case Nemonic.HALT:
@@ -130,7 +130,7 @@ public class ExecutionEnvironmentEns2001
             case Nemonic.INIT:
                 return translateInit();
             case Nemonic.INL:
-                return translateInl(op1);
+                return translateInl(res);
             case Nemonic.SUB:
                 return translateSub(res, op1, op2);
             case Nemonic.MUL:
@@ -302,7 +302,7 @@ public class ExecutionEnvironmentEns2001
         return "JUMP " + label.toString() + "\n"; // Salto incondicional a la etiqueta
     }
 
-    private String translateBrf(OperandIF condition, OperandIF label) {
+    private String translateBrf(OperandIF label, OperandIF condition) {
         return loadOperandToA(condition) + // A := condición (Boolean)
                 "JZ A, " + label.toString() + "\n"; // Si A == 0 (false), salta
     }

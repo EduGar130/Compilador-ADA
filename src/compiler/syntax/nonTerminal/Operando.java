@@ -20,6 +20,9 @@ public class Operando extends NonTerminal {
     /** Temporal que contiene el valor del operando */
     private TemporalIF temp;
 
+    /** Indica si el operando es código muerto (dead code) */
+    private boolean isDeadCode;
+
     /** Constructor por defecto */
     public Operando() {
         super();
@@ -62,6 +65,14 @@ public class Operando extends NonTerminal {
 
     public void setTemporal(TemporalIF temp) {
         this.temp = temp;
+    }
+
+    public boolean isDeadCode() {
+        return isDeadCode;
+    }
+
+    public void setDeadCode(boolean deadCode) {
+        isDeadCode = deadCode;
     }
 
     @Override
