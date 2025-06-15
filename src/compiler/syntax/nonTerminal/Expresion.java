@@ -34,6 +34,8 @@ public class Expresion extends NonTerminal {
     /** Código intermedio generado */
     private List<QuadrupleIF> intermediateCode;
 
+    private ExpresionAccesoRegistro registro;
+
     public Expresion() {
         super();
     }
@@ -68,6 +70,14 @@ public class Expresion extends NonTerminal {
 
     public void setDeadCode(boolean deadCode) {
         isDeadCode = deadCode;
+    }
+
+    public ExpresionAccesoRegistro getRegistro() {
+        return registro;
+    }
+
+    public void setRegistro(ExpresionAccesoRegistro registro) {
+        this.registro = registro;
     }
 
     @Override

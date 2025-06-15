@@ -1,7 +1,6 @@
 package compiler.syntax.nonTerminal;
 
 import compiler.intermediate.Variable;
-import compiler.semantic.symbol.SymbolVariable;
 import es.uned.lsi.compiler.semantic.symbol.SymbolIF;
 import es.uned.lsi.compiler.semantic.type.TypeIF;
 
@@ -24,6 +23,10 @@ public class Ref extends NonTerminal {
 
     /** Símbolo referenciado (resuelto en la tabla de símbolos) */
     private SymbolIF symbol;
+
+    private Variable variable;
+
+    private ExpresionAccesoRegistro registro;
 
     /** Tipo de la referencia */
     private TypeIF type;
@@ -85,6 +88,14 @@ public class Ref extends NonTerminal {
         this.intermediateCode = intermediateCode;
     }
 
+    public ExpresionAccesoRegistro getRegistro() {
+        return registro;
+    }
+
+    public void setRegistro(ExpresionAccesoRegistro registro) {
+        this.registro = registro;
+    }
+
     /**
      * Devuelve la Variable intermedia asociada a la referencia si es una variable.
      * 
@@ -92,11 +103,11 @@ public class Ref extends NonTerminal {
      * @throws IllegalStateException si el símbolo no es una variable
      */
     public Variable getVariable() {
-        if (symbol instanceof SymbolVariable) {
-            return new Variable(symbol.getName(), symbol.getScope());
-        } else {
-            throw new IllegalStateException("La referencia '" + symbol.getName() + "' no es una variable.");
-        }
+        return variable;
+    }
+
+    public void setVariable(Variable variable) {
+        this.variable = variable;
     }
 
     @Override

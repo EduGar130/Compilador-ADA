@@ -12,8 +12,9 @@ import es.uned.lsi.compiler.semantic.type.TypeIF;
  * DNI: 54487155V
  * Versión: 1.0
  */
-public class SymbolVariable
-        extends SymbolBase {
+public class SymbolVariable extends SymbolBase {
+
+    /** Dirección de memoria asociada a la variable. */
     private int address;
 
     /**

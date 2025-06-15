@@ -1,5 +1,6 @@
 package compiler.intermediate;
 
+import compiler.semantic.symbol.SymbolConstant;
 import compiler.semantic.symbol.SymbolVariable;
 import es.uned.lsi.compiler.intermediate.VariableIF;
 import es.uned.lsi.compiler.semantic.ScopeIF;
@@ -33,6 +34,13 @@ public class Variable
      * @param scope The scope index.
      */
     public Variable(SymbolVariable symbol) {
+        super();
+        this.name = symbol.getName();
+        this.scope = symbol.getScope();
+        this.address = symbol.getAddress();
+    }
+
+    public Variable(SymbolConstant symbol) {
         super();
         this.name = symbol.getName();
         this.scope = symbol.getScope();

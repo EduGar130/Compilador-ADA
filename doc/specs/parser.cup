@@ -93,6 +93,62 @@ action code {:
         }
         return false;
     }
+
+    // Generador de etiquetas
+    public LabelIF generarEtiqueta() {
+        LabelFactory labelFactory = new LabelFactory();
+        LabelIF etiqueta = labelFactory.create();
+        return etiqueta;
+    }
+
+    int direccionEstatica = getDireccionEstatica();
+    // Método para obtener la dirección estática inicial
+    private int getDireccionEstatica() {
+        ExecutionEnvironmentIF environment = new ExecutionEnvironmentEns2001();
+        return environment.getMemorySize();
+    }
+
+    // Generador de direcciones de memoria
+    public int generarDireccion(int size) {
+        int direccion = direccionEstatica;
+        direccionEstatica -= size;
+        return direccion;
+    }
+
+    // Obtiene el tipo anidadod en una cadena de registros
+    public TypeIF obtenerTipoAnidadoRegistro(ExpresionAccesoRegistro accesoRegistro) {
+        if (!(accesoRegistro.getType() instanceof TypeRecord)) {
+            semanticErrorManager.semanticDebug("Tipo: " + accesoRegistro.getType() + " no tiene registros anidados: " + accesoRegistro.getRegistro());
+            return accesoRegistro.getType(); // Hemos llegado al final de la cadena de registros
+        }
+        semanticErrorManager.semanticDebug("Tipo: " + accesoRegistro.getType() + " tiene registros anidados: " + accesoRegistro.getRegistro());
+        return obtenerTipoAnidadoRegistro(accesoRegistro.getRegistro());
+    }
+
+    // Completa el acceso a un registro, incluyendo subregistros
+    public void completarAccesoRegistro(ExpresionAccesoRegistro acceso, TypeRecord record, Variable baseRegistro, IntermediateCodeBuilder iCb, TemporalFactory tf, ScopeIF scope) {
+        if (acceso == null || record == null) return;
+
+        String campoName = acceso.getRegistro().getName();
+        TypeIF campoTipo = record.getCampo(campoName);
+        if (campoTipo == null) {
+            semanticErrorManager.semanticFatalError("Campo '" + campoName + "' no encontrado en el RECORD: " + record.toString());
+            
+        }
+
+        acceso.setType(campoTipo);
+
+        Field campo = new Field(baseRegistro, campoName, record.getCampos());
+        TemporalIF temp = tf.create();
+        iCb.addQuadruple(Nemonic.ACCESO, temp, campo);
+        acceso.setTemporal(temp);
+        acceso.setField(campo);
+
+        // Si tiene subregistro, hacer llamada recursiva
+        if (acceso.getRegistro() != null && campoTipo instanceof TypeRecord) {
+            completarAccesoRegistro(acceso.getRegistro(), (TypeRecord) campoTipo, baseRegistro, iCb, tf, scope);
+        }
+    }
 :}	
 
 parser code {:
@@ -259,16 +315,19 @@ program ::=
             ExecutionEnvironmentIF environment = new ExecutionEnvironmentEns2001();
             semanticErrorManager.semanticInfo("Generamos output .ens");
             semanticErrorManager.semanticDebug("Código intermedio generado: " + intermediateCode);
-            int direccionEstatica = environment.getMemorySize();
             List<SymbolIF> simbolos = scopeManager.getCurrentScope().getSymbolTable().getSymbols();
             for(SymbolIF symbol : simbolos) {
                 if (symbol instanceof SymbolVariable) {
                     SymbolVariable var = (SymbolVariable) symbol;
-                    if (var.getAddress() >= direccionEstatica) {
-                        semanticFatalError("Dirección de variable fuera de rango: " + var.getName(), 0, 0);
+                    if(var.getAddress() == 0){
+                        var.setAddress(generarDireccion(var.getType().getSize()));
                     }
-                    var.setAddress(direccionEstatica);
-                    direccionEstatica -= var.getType().getSize();
+                }
+                if (symbol instanceof SymbolConstant) {
+                    SymbolConstant constant = (SymbolConstant) symbol;
+                    if(constant.getAddress() == 0){
+                        constant.setAddress(generarDireccion(constant.getType().getSize()));
+                    }
                 }
             }
             List<TemporalIF> temporales = scopeManager.getCurrentScope().getTemporalTable().getTemporals();
@@ -276,11 +335,9 @@ program ::=
             {
                 if(temporal instanceof Temporal) {
                     Temporal temp = (Temporal) temporal;
-                    if (temp.getAddress() >= direccionEstatica) {
-                        semanticFatalError("Dirección de temporal fuera de rango: " + temp.getName(), 0, 0);
-                    }
-                    temp.setAddress(direccionEstatica);
-                    direccionEstatica -= temp.getSize();
+                    semanticErrorManager.semanticDebug("Procesandooo temporal: " + temp.getName() + " " + temp.getAddress());
+                    temp.setAddress(generarDireccion(temp.getSize()));
+                    semanticErrorManager.semanticDebug("Asignando dirección al temporal: " + temp.getName() + " "  + temp.getAddress());
                 }
             }
             semanticErrorManager.semanticDebug("Dirección estática inicial: " + environment.getMemorySize());
@@ -291,22 +348,21 @@ program ::=
                     List<SymbolIF> symbols = scope.getSymbolTable().getSymbols();
                     for(SymbolIF symbol : symbols) {
                         if (symbol instanceof SymbolVariable) {
-                        int direccion = ((SymbolVariable) symbol).getAddress();
+                            int direccion = ((SymbolVariable) symbol).getAddress();
                             Variable variable = new Variable((SymbolVariable) symbol);
                             builder.addQuadruple(Nemonic.VARGLOBAL, variable, 0);
                         }
                         if (symbol instanceof SymbolConstant) {
                             SymbolConstant constant = (SymbolConstant) symbol;
                             Value value = new Value(constant.getValue());
-                            builder.addQuadruple(Nemonic.CONSTANT, constant.getName(), value, null);
+                            Variable constanteDestino = new Variable(constant);
+                            builder.addQuadruple(Nemonic.CONSTANT, constanteDestino, value, null);
                         }
                     }
                 builder.addQuadruples(ax.getIntermediateCode());
-                Integer labelCount = 0;
                 for(QuadrupleIF quad : ax.getIntermediateCode()) {
                     if(quad.getOperation() == Nemonic.WRSTR) {
-                        LabelFactory labelFactory = new LabelFactory();
-                        LabelIF labelName = labelFactory.create((labelCount++).toString());
+                        LabelIF labelName = generarEtiqueta();
                         quad.setFirstOperand(labelName);
                         builder.addQuadruple(Nemonic.CADENA, quad.getResult(), labelName, null);
                     }
@@ -1199,20 +1255,20 @@ declParametros ::= declParametro:dp DELIMPUNTOCOMA declParametros:dps
 
 declParametro ::= listaParametros:lp DELIMTIPO tipo:t
 {:
-    semanticErrorManager.semanticInfo("Procesando parámetro(s) tipo IN.");
+    semanticErrorManager.semanticInfo("Procesando parámetro(s).");
 
     DeclParametro declParametro = new DeclParametro();
     declParametro.setListaParametros((ListaParametros) lp);
     declParametro.setTipo((Tipo) t);
     declParametro.setSalida(false);
 
-    semanticErrorManager.semanticDebug("Parámetro IN: " + declParametro.toString());
+    semanticErrorManager.semanticDebug("Parámetro: " + declParametro.toString());
 
     RESULT = declParametro;
 :}
 | listaParametros:lp DELIMTIPO OUT tipo:t
 {:
-    semanticErrorManager.semanticInfo("Procesando parámetro(s) tipo OUT.");
+    semanticErrorManager.semanticInfo("Procesando parámetro(s) con paso por referencia.");
 
     DeclParametro declParametro = new DeclParametro();
     declParametro.setListaParametros((ListaParametros) lp);
@@ -1340,7 +1396,7 @@ declProcedimiento ::= PROCEDURE IDENTIFICADOR:id PARENTESISAP declParametros:dp 
 //Cuerpo del procedimiento   
 cuerpo ::= BEGIN sentencias:s END IDENTIFICADOR:id DELIMPUNTOCOMA
 {:
-    semanticErrorManager.semanticInfo("Procesando cuerpo de procedimiento con sentencias: END " + ((Token)id).getLexema());
+    semanticErrorManager.semanticInfo("Procesando cuerpo de procedimiento con sentencias END " + ((Token)id).getLexema());
 
     Cuerpo cuerpo = new Cuerpo();
     cuerpo.setSentencias((Sentencias) s);
@@ -1356,7 +1412,7 @@ cuerpo ::= BEGIN sentencias:s END IDENTIFICADOR:id DELIMPUNTOCOMA
     intermediateCode.add(new Quadruple(Nemonic.HALT)); // Fin del programa
     cuerpo.setIntermediateCode(intermediateCode);
 
-    semanticErrorManager.semanticDebug("Cuerpo generado con sentencias: " + cuerpo.toString());
+    semanticErrorManager.semanticDebug("Cuerpo generado con sentencias " + cuerpo.toString());
 
     RESULT = cuerpo;
 :}
@@ -1558,11 +1614,25 @@ sentenciaAsignacion ::= ref:r ASIGNACION:a expresion:e DELIMPUNTOCOMA
 
     Ref referencia = (Ref) r;
     Expresion expresion = (Expresion) e;
+    TypeIF tipo;
 
-    // Validación de tipos
-    if (!referencia.getType().equals(expresion.getType())) {
+    if (referencia.getType() instanceof TypeRecord) {
+        semanticErrorManager.semanticDebug("AAAAAAAA " + expresion.toString());        // Validación de tipo para asignación a campo de registro
+        if(expresion.getRegistro() != null) {
+            tipo = obtenerTipoAnidadoRegistro(expresion.getRegistro());
+        }
+        else {
+            tipo = obtenerTipoAnidadoRegistro(referencia.getRegistro());
+        }
+        semanticErrorManager.semanticDebug("Tipo de campo de registro: " + tipo.getName());
+    } else {
+        tipo = referencia.getType();
+        semanticErrorManager.semanticDebug("Referencia a variable simple: " + referencia.getType().getName());
+    }
+    
+    if (!tipo.equals(expresion.getType())) {
         semanticFatalError("Error de tipos en asignación. Se esperaba tipo " +
-            referencia.getType().getName() + ", pero se obtuvo " +
+            tipo.getName() + ", pero se obtuvo " +
             expresion.getType().getName(), 
             ((Token) a).getLine(), ((Token) a).getColumn());
     }
@@ -1572,10 +1642,20 @@ sentenciaAsignacion ::= ref:r ASIGNACION:a expresion:e DELIMPUNTOCOMA
     sentenciaAsignacion.setRef(referencia);
     sentenciaAsignacion.setExpresion(expresion);
 
+    semanticErrorManager.semanticDebug("Referencia: " + referencia.toString());
+
     // Generación de código intermedio
     IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scopeManager.getCurrentScope());
-    iCb.addQuadruples(expresion.getIntermediateCode());
-    iCb.addQuadruple(Nemonic.MOVE, referencia.getVariable(), expresion.getTemporal());
+    if (referencia.getType() instanceof TypeRecord) {
+        semanticErrorManager.semanticInfo("Asignación a campo de registro");
+        // Asignación a campo de registro
+        iCb.addQuadruples(expresion.getIntermediateCode());
+        iCb.addQuadruple(Nemonic.MOVE, referencia.getRegistro().getField(), expresion.getTemporal());
+    } else {
+        semanticErrorManager.semanticInfo("Asignación a variable simple");
+        iCb.addQuadruples(expresion.getIntermediateCode());
+        iCb.addQuadruple(Nemonic.MOVE, referencia.getVariable(), expresion.getTemporal());
+    }
 
     sentenciaAsignacion.setIntermediateCode(iCb.create());
 
@@ -1596,24 +1676,34 @@ ref ::= IDENTIFICADOR:id
         semanticFatalError("Variable no declarada: " + nombre, id.getLine(), id.getColumn());
     }
 
+    if (simbolo instanceof SymbolConstant) {
+        semanticFatalError("El identificador '" + nombre + "' es una constante, no una variable, por lo que no es posible asignarle un nuevo valor.", id.getLine(), id.getColumn());
+    }
+
     if (!(simbolo instanceof SymbolVariable)) {
         semanticFatalError("El identificador '" + nombre + "' no es una variable.", id.getLine(), id.getColumn());
     }
 
     Ref ref = new Ref();
     ref.setType(simbolo.getType());
-    ref.setSymbol(simbolo); // Asignamos el símbolo para usarlo en getVariable()
+    SymbolVariable symbolVariable = (SymbolVariable) simbolo;
 
     // Código intermedio: leer valor de variable en un temporal
     TemporalFactory tf = new TemporalFactory(scope);
     IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scope);
     TemporalIF temporal = tf.create();
 
-    Variable var = new Variable(nombre, simbolo.getScope());
+    if(symbolVariable.getAddress() == 0) {
+        symbolVariable.setAddress(generarDireccion(simbolo.getType().getSize()));
+    }
+
+    Variable var = new Variable(symbolVariable);
     iCb.addQuadruple(Nemonic.MV, temporal, var);
 
     ref.setIntermediateCode(iCb.create());
     ref.setTemporal(temporal);
+    ref.setVariable(var);
+    ref.setSymbol(symbolVariable);
 
     semanticErrorManager.semanticDebug("Referencia creada: nombre=" + nombre + ", tipo=" + simbolo.getType().getName());
     semanticErrorManager.semanticDebug("Objeto Ref: " + ref.toString());
@@ -1630,6 +1720,7 @@ ref ::= IDENTIFICADOR:id
     ref.setType(acceso.getType());
     ref.setTemporal(acceso.getTemporal());
     ref.setIntermediateCode(acceso.getIntermediateCode());
+    ref.setRegistro(acceso);
 
     semanticErrorManager.semanticDebug("Referencia a campo de registro con tipo: " + ref.getType().getName());
     semanticErrorManager.semanticDebug("Objeto Ref: " + ref.toString());
@@ -1659,8 +1750,7 @@ sentenciaIf ::= IF expresion:e THEN sentencias:st END IF DELIMPUNTOCOMA
 
     // Generación de código intermedio
     IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scope);
-    LabelFactory lf = new LabelFactory();
-    LabelIF etiquetaFinIf = lf.create();
+    LabelIF etiquetaFinIf = generarEtiqueta();
 
     semanticErrorManager.semanticDebug("Etiqueta FIN_IF: " + etiquetaFinIf.getName());
 
@@ -1702,9 +1792,8 @@ sentenciaIf ::= IF expresion:e THEN sentencias:st END IF DELIMPUNTOCOMA
 
     // Generación de código intermedio
     IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scope);
-    LabelFactory lf = new LabelFactory();
-    LabelIF etiquetaElse = lf.create();
-    LabelIF etiquetaFinIf = lf.create();
+    LabelIF etiquetaElse = generarEtiqueta();
+    LabelIF etiquetaFinIf = generarEtiqueta();
 
     semanticErrorManager.semanticDebug("Etiqueta ELSE: " + etiquetaElse.getName());
     semanticErrorManager.semanticDebug("Etiqueta FIN_IF: " + etiquetaFinIf.getName());
@@ -1743,9 +1832,8 @@ sentenciaWhile ::= WHILE expresion:e LOOP sentencias:st END LOOP DELIMPUNTOCOMA
 
     // Generación de código intermedio
     IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scope);
-    LabelFactory lf = new LabelFactory();
-    LabelIF etiquetaInicioWhile = lf.create();
-    LabelIF etiquetaFinWhile = lf.create();
+    LabelIF etiquetaInicioWhile = generarEtiqueta();
+    LabelIF etiquetaFinWhile = generarEtiqueta();
 
     semanticErrorManager.semanticDebug("Etiqueta INICIO_WHILE: " + etiquetaInicioWhile.getName());
     semanticErrorManager.semanticDebug("Etiqueta FIN_WHILE: " + etiquetaFinWhile.getName());
@@ -1879,7 +1967,9 @@ sentenciaProcedimiento ::= IDENTIFICADOR:id PARENTESISAP listaParametrosInvocaci
 
     for (int i = 0; i < parametrosFormales.size(); i++) {
         TypeIF tipoFormal = parametrosFormales.get(i).getType();
+        semanticErrorManager.semanticDebug("Parámetro formal " + (i + 1) + ": " + tipoFormal.getName());
         TypeIF tipoActual = parametrosActuales.get(i).getType();
+        semanticErrorManager.semanticDebug("Parámetro actual " + (i + 1) + ": " + tipoActual.getName());
 
         if (!tipoFormal.equals(tipoActual)) {
             semanticFatalError("Tipo incorrecto en el parámetro " + (i + 1) + " de '" + id.getLexema() + "'. Esperado: " +
@@ -1927,6 +2017,11 @@ expresion ::= expresion:e1 operadorLogico:op expresion:e2
 
     ScopeIF scope = scopeManager.getCurrentScope();
     TypeBoolean typeBoolean = (TypeBoolean) scopeManager.searchType("BOOLEAN");
+
+    semanticErrorManager.semanticDebug("Tipo esperado para la expresión lógica: " + typeBoolean.getName());
+
+    semanticErrorManager.semanticDebug("Tipo de la primera expresión: " + e1.getType().getName() + " " + e1.toString());
+    semanticErrorManager.semanticDebug("Tipo de la segunda expresión: " + e2.getType().getName() + " " + e2.toString());
 
     if (!e1.getType().equals(typeBoolean) || !e2.getType().equals(typeBoolean)) {
         semanticFatalError("Error de tipos en operación lógica: se esperaban BOOLEAN.", 0, 0);
@@ -2048,6 +2143,7 @@ expresion ::= expresion:e1 operadorLogico:op expresion:e2
     expr.setType(((ExpresionAccesoRegistro)ear).getType());
     expr.setTemporal(((ExpresionAccesoRegistro)ear).getTemporal());
     expr.setIntermediateCode(((ExpresionAccesoRegistro)ear).getIntermediateCode());
+    expr.setRegistro((ExpresionAccesoRegistro)ear);
 
     semanticErrorManager.semanticDebug("Expresión acceso a registro: tipo=" + expr.getType().getName() + ", temporal=" + expr.getTemporal());
 
@@ -2154,9 +2250,13 @@ operando ::= BOOLEANO:bool
    operando.setType(simbolo.getType());
 
    if (simbolo instanceof SymbolVariable) {
-       Variable var = new Variable(id.getLexema(), simbolo.getScope());
-       iCb.addQuadruple(Nemonic.MV, temporal, var);
-       semanticErrorManager.semanticDebug("Identificador es una variable: MV " + temporal + " <- " + var);
+        SymbolVariable simboloVariable = (SymbolVariable) simbolo;
+        if(simboloVariable.getAddress() == 0) {
+            simboloVariable.setAddress(generarDireccion(simboloVariable.getType().getSize()));
+        }
+        Variable var = new Variable(simboloVariable);
+        iCb.addQuadruple(Nemonic.MV, temporal, var);
+        semanticErrorManager.semanticDebug("Identificador es una variable: MV " + temporal + " <- " + var);
    } else if (simbolo instanceof SymbolConstant) {
        Value valor = new Value(((SymbolConstant) simbolo).getValue());
        iCb.addQuadruple(Nemonic.MV, temporal, valor);
@@ -2180,6 +2280,10 @@ operando ::= BOOLEANO:bool
 
    if (typeInteger == null) {
        semanticErrorManager.semanticFatalError("[Error] Tipo INTEGER no registrado en Scope Global.");
+   }
+
+   if(Integer.parseInt(intlit.getLexema()) > 65535  || Integer.parseInt(intlit.getLexema()) < 0) {
+       semanticFatalError("[Error] Valor entero '" + intlit.getLexema() + "' fuera de rango (0-65535).", intlit.getLine(), intlit.getColumn());
    }
 
    TemporalFactory tf = new TemporalFactory(scope);
@@ -2263,89 +2367,96 @@ operadorLogico ::= AND
 //expresion de acceso a campos de registros                         
 expresionAccesoRegistro ::= IDENTIFICADOR:id1 ACCESO IDENTIFICADOR:id2
 {:
+
     semanticErrorManager.semanticInfo("Procesando acceso simple a campo de record: " + id1.getLexema() + "." + id2.getLexema());
-
-    ScopeIF scope = scopeManager.getCurrentScope();
-    SymbolBase simbolo = (SymbolBase) scopeManager.searchSymbol(id1.getLexema());
-
-    if (simbolo == null) {
-        semanticFatalError("Identificador no declarado: " + id1.getLexema(), id1.getLine(), id1.getColumn());
-    }
-
-    if (!(simbolo.getType() instanceof TypeRecord)) {
-        semanticFatalError("Acceso no permitido: '" + id1.getLexema() + "' no es un RECORD.", id1.getLine(), id1.getColumn());
-    }
-
-    TypeRecord typeRecord = (TypeRecord) simbolo.getType();
-    TypeIF tipoCampo = typeRecord.getCampo(id2.getLexema());
-
-    if (tipoCampo == null) {
-        semanticFatalError("El campo '" + id2.getLexema() + "' no existe en el RECORD '" + id1.getLexema() + "'.", id2.getLine(), id2.getColumn());
-    }
-
-    // Construcción
     ExpresionAccesoRegistro ear = new ExpresionAccesoRegistro();
-    ear.setType(tipoCampo);
-    ear.setFirstField(id2.getLexema());
+    SymbolVariable simbolo = (SymbolVariable) scopeManager.searchSymbol(id1.getLexema());
+    if (simbolo == null) {
+        // Construcción
+        ear.setType(null);
+        ExpresionAccesoRegistro earHija = new ExpresionAccesoRegistro();
+        earHija.setType(null);
+        earHija.setName(id2.getLexema());
+        earHija.setRegistro(null); // Indica final de la cadena de acceso
+        ear.setRegistro(earHija);
+        ear.setName(id1.getLexema());
+    } else { 
+        if(!(scopeManager.searchSymbol(id1.getLexema()) instanceof SymbolVariable)) {
+            semanticFatalError("El identificador '" + id1.getLexema() + "' no es una variable.", id1.getLine(), id1.getColumn());
+        }
 
-    // Código intermedio
-    TemporalFactory tf = new TemporalFactory(scope);
-    IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scope);
-    TemporalIF temp = tf.create();
-    Variable registro = new Variable(id1.getLexema(), simbolo.getScope());
-    Field campo = new Field(registro, id2.getLexema());
+        ScopeIF scope = scopeManager.getCurrentScope();
 
-    iCb.addQuadruple(Nemonic.MVR, temp, campo);
+        if (!(simbolo.getType() instanceof TypeRecord)) {
+            semanticFatalError("Acceso no permitido: '" + id1.getLexema() + "' no es un RECORD.", id1.getLine(), id1.getColumn());
+        }
+        TypeRecord typeRecord = (TypeRecord) simbolo.getType();
+        TypeIF tipoCampo = typeRecord.getCampo(id2.getLexema());
 
-    ear.setTemporal(temp);
-    ear.setIntermediateCode(iCb.create());
+        if (tipoCampo == null) {
+            semanticFatalError("El campo '" + id2.getLexema() + "' no existe en el RECORD '" + id1.getLexema() + "'.", id2.getLine(), id2.getColumn());
+        }
+        // Construcción
+        ear.setType(typeRecord);
+        ExpresionAccesoRegistro earHija = new ExpresionAccesoRegistro();
+        earHija.setType(tipoCampo);
+        earHija.setName(id2.getLexema());
+        earHija.setRegistro(null); // Indica final de la cadena de acceso
+        ear.setRegistro(earHija);
+        ear.setName(id1.getLexema());
 
-    semanticErrorManager.semanticDebug("Acceso a campo '" + id2.getLexema() + "' del record '" + id1.getLexema() +
-                                       "' generado correctamente. Temporal: " + temp + ", Tipo: " + tipoCampo.getName());
+        // Código intermedio
+        TemporalFactory tf = new TemporalFactory(scope);
+        IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scope);
+        TemporalIF temp = tf.create();
+
+        if(simbolo.getAddress() == 0) {
+            simbolo.setAddress(generarDireccion(typeRecord.getSize()));
+        }
+
+        Variable registro = new Variable(simbolo);
+        Field campo = new Field(registro, id2.getLexema(), typeRecord.getCampos());
+        semanticErrorManager.semanticDebug("Campo de registro: " + campo.getCampo() + ", dirección: " + campo.getAddress());
+
+        iCb.addQuadruple(Nemonic.ACCESO, temp, campo);
+
+        ear.setTemporal(temp);
+        ear.setField(campo);
+        ear.setIntermediateCode(iCb.create());
+
+        semanticErrorManager.semanticDebug("Acceso a campo '" + id2.getLexema() + "' del record '" + id1.getLexema() +
+                                        "' generado correctamente. Temporal: " + temp + ", Tipo: " + tipoCampo.getName());
+    } 
 
     RESULT = ear;
 :}
 | IDENTIFICADOR:id1 ACCESO expresionAccesoRegistro:ear
 {:
-    semanticErrorManager.semanticInfo("Procesando acceso encadenado: " + id1.getLexema() + ".<subregistro>");
-
+    semanticErrorManager.semanticDebug("Acceso encadenado a campo de registro: " + id1.getLexema() + "." + ear.toString());
     ScopeIF scope = scopeManager.getCurrentScope();
-    SymbolBase simbolo = (SymbolBase) scopeManager.searchSymbol(id1.getLexema());
+    SymbolVariable simbolo = (SymbolVariable) scopeManager.searchSymbol(id1.getLexema());
+    ExpresionAccesoRegistro nuevoEar = new ExpresionAccesoRegistro();
 
     if (simbolo == null) {
-        semanticFatalError("Identificador no declarado: " + id1.getLexema(), id1.getLine(), id1.getColumn());
+        nuevoEar.setType(null);
+        nuevoEar.setName(id1.getLexema());
+        nuevoEar.setRegistro(ear);
+    } else {
+        if (!(simbolo.getType() instanceof TypeRecord)) {
+            semanticFatalError("Acceso no permitido: '" + id1.getLexema() + "' no es un RECORD.", id1.getLine(), id1.getColumn());
+        }
+        Variable varBase = new Variable(simbolo);
+        IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scope);
+        TemporalFactory tf = new TemporalFactory(scope);
+        nuevoEar.setType(simbolo.getType());
+        nuevoEar.setName(id1.getLexema());
+        nuevoEar.setRegistro(ear);
+
+        completarAccesoRegistro(nuevoEar, (TypeRecord) simbolo.getType(), varBase, iCb, tf, scope);
+
+        nuevoEar.setIntermediateCode(iCb.create());
     }
 
-    if (!(simbolo.getType() instanceof TypeRecord)) {
-        semanticFatalError("Acceso no permitido: '" + id1.getLexema() + "' no es un RECORD.", id1.getLine(), id1.getColumn());
-    }
-
-    TypeRecord typeRecord = (TypeRecord) simbolo.getType();
-    TypeIF tipoCampo = typeRecord.getCampo(ear.getFirstField());
-
-    if (tipoCampo == null) {
-        semanticFatalError("El campo '" + ear.getFirstField() + "' no existe en el record '" + id1.getLexema() + "'.", id1.getLine(), id1.getColumn());
-    }
-
-    ExpresionAccesoRegistro nuevoEar = new ExpresionAccesoRegistro();
-    nuevoEar.setType(ear.getType());
-    nuevoEar.setFirstField(ear.getFirstField());
-
-    // Código intermedio
-    TemporalFactory tf = new TemporalFactory(scope);
-    IntermediateCodeBuilder iCb = new IntermediateCodeBuilder(scope);
-    TemporalIF temp = tf.create();
-
-    Variable registro = new Variable(id1.getLexema(), simbolo.getScope());
-    Field campo = new Field(registro, ear.getFirstField());
-
-    iCb.addQuadruple(Nemonic.MVR, temp, campo);
-    iCb.addQuadruples(ear.getIntermediateCode());
-
-    nuevoEar.setTemporal(temp);
-    nuevoEar.setIntermediateCode(iCb.create());
-
-    semanticErrorManager.semanticDebug("Acceso encadenado generado: temporal=" + temp + ", tipo final=" + ear.getType().getName());
 
     RESULT = nuevoEar;
 :};
@@ -2370,6 +2481,8 @@ exprFuncion ::= IDENTIFICADOR:id PARENTESISAP listaParametrosInvocacion:lpi PARE
     SymbolFunction function = (SymbolFunction) simbolo;
     List<SymbolParameter> parametrosFormales = function.getParameterList();
     List<Expresion> parametrosActuales = ((ListaParametrosInvocacion)lpi).getParametros();
+    //invertimos la lista de parámetros actuales para que coincida con el orden de los formales
+    Collections.reverse(parametrosActuales);
 
     if (parametrosFormales.size() != parametrosActuales.size()) {
         semanticFatalError("Número incorrecto de parámetros en llamada a función '" + id.getLexema() + "'.", id.getLine(), id.getColumn());
@@ -2421,12 +2534,12 @@ exprFuncion ::= IDENTIFICADOR:id PARENTESISAP listaParametrosInvocacion:lpi PARE
        
 listaParametrosInvocacion ::= expresion:e
 {:
-    semanticErrorManager.semanticInfo("Lista de parámetros: primer parámetro");
+    semanticErrorManager.semanticInfo("Lista de parámetros: último parámetro");
 
     ListaParametrosInvocacion listaParametros = new ListaParametrosInvocacion();
     listaParametros.addParametro((Expresion)e);
 
-    semanticErrorManager.semanticDebug("Parámetro 1 añadido. Tipo: " + e.getType().getName() + ", Temporal: " + e.getTemporal());
+    semanticErrorManager.semanticDebug("Parámetro fin añadido. Tipo: " + e.getType().getName() + ", Temporal: " + e.getTemporal());
 
     RESULT = listaParametros;
 :}
@@ -2435,10 +2548,10 @@ listaParametrosInvocacion ::= expresion:e
     ListaParametrosInvocacion listaParametros = (ListaParametrosInvocacion)lpi;
     listaParametros.addParametro((Expresion)e);
 
-    int posicion = listaParametros.getParametros().size();
+    int posicion = listaParametros.getParametros().size() - 1;
 
-    semanticErrorManager.semanticInfo("Lista de parámetros: añadir parámetro en posición " + posicion);
-    semanticErrorManager.semanticDebug("Parámetro " + posicion + " añadido. Tipo: " + e.getType().getName() + ", Temporal: " + e.getTemporal());
+    semanticErrorManager.semanticInfo("Lista de parámetros: añadir parámetro en posición fin-" + posicion);
+    semanticErrorManager.semanticDebug("Parámetro fin-" + posicion + " añadido. Tipo: " + e.getType().getName() + ", Temporal: " + e.getTemporal());
 
     RESULT = listaParametros;
 :};              

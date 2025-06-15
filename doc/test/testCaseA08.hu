@@ -7,6 +7,8 @@ z: Integer;
 
 a,b: Integer;
 
+k: Boolean;
+
 function resta (x,y:  Integer) return Integer is
 
 begin
@@ -30,6 +32,15 @@ begin
 
 	Put_line ("SUBPROGRAMAS FUNCIONES");
 	
+	Put_line ("resta(5,2):");
+	z := resta(5,2);
+	Put_line (z);
+	Put_line ("resta2(5,2):");
+		a := 5;
+		b := 2;
+		k := false;
+		z := resta2(a,b,k);
+		Put_line (z);
 			
 
 end testCase06;

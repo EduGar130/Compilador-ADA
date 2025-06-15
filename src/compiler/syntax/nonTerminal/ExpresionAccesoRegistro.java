@@ -1,5 +1,6 @@
 package compiler.syntax.nonTerminal;
 
+import compiler.intermediate.Field;
 import es.uned.lsi.compiler.intermediate.TemporalIF;
 import es.uned.lsi.compiler.semantic.type.TypeIF;
 
@@ -18,7 +19,16 @@ public class ExpresionAccesoRegistro extends NonTerminal {
 
     private TypeIF type;
     private TemporalIF temporal;
-    private String firstField;
+    private String name;
+    private ExpresionAccesoRegistro registro;
+    private Field field;
+
+    /**
+     * Constructor por defecto.
+     */
+    public ExpresionAccesoRegistro() {
+        super();
+    }
 
     public TypeIF getType() {
         return type;
@@ -36,20 +46,36 @@ public class ExpresionAccesoRegistro extends NonTerminal {
         this.temporal = temporal;
     }
 
-    public String getFirstField() {
-        return firstField;
+    public ExpresionAccesoRegistro getRegistro() {
+        return registro;
     }
 
-    public void setFirstField(String firstField) {
-        this.firstField = firstField;
+    public void setRegistro(ExpresionAccesoRegistro registro) {
+        this.registro = registro;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Field getField() {
+        return field;
+    }
+
+    public void setField(Field field) {
+        this.field = field;
     }
 
     @Override
     public String toString() {
-        return "ExpresionAccesoRegistro{" +
-                "type=" + (type != null ? type.toString() : "null") +
-                ", temporal=" + (temporal != null ? temporal.toString() : "null") +
-                ", firstField='" + (firstField != null ? firstField : "null") + '\'' +
-                '}';
+        if (registro != null) {
+            return name + "." + registro.toString();
+        } else {
+            return name;
+        }
     }
 }

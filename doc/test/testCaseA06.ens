@@ -1,14 +1,14 @@
 ; Quadruple - [VARGLOBAL a, 0, null]
 ; DECLARACION GLOBAL a --> reserva espacio global
-MOVE #0, /65535
+MOVE #0, /65533
 
 ; Quadruple - [VARGLOBAL b, 0, null]
 ; DECLARACION GLOBAL b --> reserva espacio global
-MOVE #0, /65534
+MOVE #0, /65532
 
 ; Quadruple - [VARGLOBAL z, 0, null]
 ; DECLARACION GLOBAL z --> reserva espacio global
-MOVE #0, /65533
+MOVE #0, /65531
 
 ; Quadruple - [INIT null, null, null]
 ; Inicio del programa
@@ -17,31 +17,31 @@ MOVE #0, /65533
 WRSTR /L_0
 
 ; Quadruple - [MV T_1, 5, null]
-MOVE #5, /65531
+MOVE #5, /65529
 
 ; Quadruple - [MOVE a, T_1, null]
-MOVE /65531, /0
+MOVE /65529, /65533
 
 ; Quadruple - [MV T_3, 3, null]
-MOVE #3, /65529
+MOVE #3, /65527
 
 ; Quadruple - [MOVE b, T_3, null]
-MOVE /65529, /0
+MOVE /65527, /65532
 
 ; Quadruple - [MV T_7, null, null]
-MOVE UNKNOWN, /65525
+MOVE #0, /65523
 
 ; Quadruple - [MOVE z, T_7, null]
-MOVE /65525, /0
+MOVE /65523, /65531
 
 ; Quadruple - [WRSTR z(2):, L_1, null]
 WRSTR /L_1
 
 ; Quadruple - [MV T_8, z, null]
-MOVE /0, /65524
+MOVE /65531, /65522
 
 ; Quadruple - [WRINT T_8, null, null]
-WRINT /65524
+WRINT /65522
 
 ; Quadruple - [HALT null, null, null]
 HALT

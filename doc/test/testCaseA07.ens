@@ -5,48 +5,44 @@ MOVE #0, /65535
 ; Quadruple - [INIT null, null, null]
 ; Inicio del programa
 
-; Quadruple - [WRSTR CONTROL FLUJO WHILE, L_0, null]
-WRSTR /L_0
+; Quadruple - [WRSTR CONTROL FLUJO WHILE, L_2, null]
+WRSTR /L_2
 
 ; Quadruple - [MV T_1, 5, null]
 MOVE #5, /65533
 
 ; Quadruple - [MOVE x, T_1, null]
-MOVE /65533, /0
+MOVE /65533, /65535
 
 ; Quadruple - [INL L_0, null, null]
 L_0:
 
 ; Quadruple - [MV T_2, x, null]
-MOVE /0, /65532
+MOVE /65535, /65532
 
 ; Quadruple - [MV T_3, 1, null]
 MOVE #1, /65531
 
 ; Quadruple - [GR T_4, T_2, T_3]
-LOAD A, /65532
-LOAD B, /65531
-CMP A, B
-BG GR_TRUE_0
-MOVE A, #0
-BR GR_END_1
-GR_TRUE_0:
-MOVE A, #1
-GR_END_1:
-STORE A, /65530
+CMP /65532, /65531
+MOVE #0, /65530
+BN $GR_END_0
+BZ $GR_END_0
+MOVE #1, /65530
+GR_END_0 :
 
 ; Quadruple - [BRF T_4, L_1, null]
-LOAD A, /65530
-JZ A, L_1
+CMP /65530, #0
+BZ $L_1
 
 ; Quadruple - [MV T_5, x, null]
-MOVE /0, /65529
+MOVE /65535, /65529
 
 ; Quadruple - [WRINT T_5, null, null]
 WRINT /65529
 
 ; Quadruple - [MV T_7, x, null]
-MOVE /0, /65527
+MOVE /65535, /65527
 
 ; Quadruple - [MV T_8, 1, null]
 MOVE #1, /65526
@@ -56,10 +52,10 @@ SUB /65527, /65526
 MOVE .A, /65525
 
 ; Quadruple - [MOVE x, T_9, null]
-MOVE /65525, /0
+MOVE /65525, /65535
 
 ; Quadruple - [BR L_0, null, null]
-JUMP L_0
+BR $L_0
 
 ; Quadruple - [INL L_1, null, null]
 L_1:
@@ -67,6 +63,6 @@ L_1:
 ; Quadruple - [HALT null, null, null]
 HALT
 
-; Quadruple - [CADENA CONTROL FLUJO WHILE, L_0, null]
-L_0 : DATA "CONTROL FLUJO WHILE"
+; Quadruple - [CADENA CONTROL FLUJO WHILE, L_2, null]
+L_2 : DATA "CONTROL FLUJO WHILE"
 

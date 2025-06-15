@@ -5,6 +5,7 @@ procedure testCase03 () is
 CIERTO: constant := True;
 FALSO: constant := False;
 UNO: constant := 1;
+x: Integer;
 
 begin
 

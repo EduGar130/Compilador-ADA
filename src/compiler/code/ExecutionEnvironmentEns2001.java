@@ -153,17 +153,33 @@ public class ExecutionEnvironmentEns2001
                 return translateMv(res, op1);
             case Nemonic.DECL:
                 return translateDecl(op1);
+            case Nemonic.ACCESO:
+                return translateAcceso(res, op1);
             default:
                 return "??\n";
+        }
+    }
+
+    private String translateAcceso(OperandIF res, OperandIF op1) {
+        if (op1 instanceof Field) {
+            Field field = (Field) op1;
+            StringBuilder code = new StringBuilder();
+            code.append("; ACCESO al campo ").append(field.getCampo())
+                    .append(" del registro ").append(field.getRegistro().getName())
+                    .append(" --> reserva espacio para el campo\n");
+            code.append("MOVE ").append(getAddress(op1)).append(", ").append(getAddress(res)).append("\n");
+            return code.toString();
+        } else {
+            return "; ACCESO DESCONOCIDO\n";
         }
     }
 
     private String translateConstant(OperandIF res, OperandIF op1) {
         StringBuilder code = new StringBuilder();
         if (op1 instanceof Value) {
-            Value value = (Value) op1;
-            code.append("; CONSTANTE ").append(value.getValue()).append(" --> reserva espacio para constante\n");
-            code.append("MOVE ").append(getAddress(op1)).append(", ").append(res.toString()).append("\n");
+            code.append("; CONSTANTE ").append(res.toString()).append(" con valor: ").append(op1.toString())
+                    .append(" --> reserva espacio para la constante\n");
+            code.append("MOVE ").append(getAddress(op1)).append(", ").append(getAddress(res)).append("\n");
         } else {
             code.append("; CONSTANTE DESCONOCIDA\n");
         }
@@ -189,13 +205,6 @@ public class ExecutionEnvironmentEns2001
         return "; DECL " + getAddress(op1) + " --> reserva espacio\n";
     }
 
-    private String translateMove(OperandIF res, OperandIF op1) {
-        StringBuilder code = new StringBuilder();
-        code.append(loadOperandToA(op1));
-        code.append("STORE A, ").append(getAddress(res)).append("\n");
-        return code.toString();
-    }
-
     private String translateTypeUsed(OperandIF op1) {
         return "; TIPO USADO: " + op1.toString() + "\n";
     }
@@ -216,32 +225,24 @@ public class ExecutionEnvironmentEns2001
     private String translateGr(OperandIF res, OperandIF op1, OperandIF op2) {
         StringBuilder code = new StringBuilder();
 
-        String labelTrue = getNewLabel("GR_TRUE");
         String labelEnd = getNewLabel("GR_END");
 
-        // Cargar op1 en A
-        code.append(loadOperandToA(op1));
+        // comparar op1 y op2
+        code.append("CMP ")
+                .append(getAddress(op1)).append(", ").append(getAddress(op2)).append("\n");
 
-        // Cargar op2 en B
-        code.append("LOAD B, ").append(getAddress(op2)).append("\n");
+        // res = 0
+        code.append("MOVE #0, ").append(getAddress(res)).append("\n");
 
-        // Comparar A > B
-        code.append("CMP A, B\n");
-        code.append("BG ").append(labelTrue).append("\n"); // Si A > B, salto a TRUE
+        // si op1 <= op2, saltar a GR_TRUE
+        code.append("BN $").append(labelEnd).append("\n");
+        code.append("BZ $").append(labelEnd).append("\n");
 
-        // Caso falso: resultado := 0
-        code.append("MOVE A, #0\n");
-        code.append("BR ").append(labelEnd).append("\n");
+        // res = true
+        code.append("MOVE #1, ").append(getAddress(res)).append("\n");
 
-        // Caso verdadero: resultado := 1
-        code.append(labelTrue).append(":\n");
-        code.append("MOVE A, #1\n");
-
-        // Fin
-        code.append(labelEnd).append(":\n");
-
-        // Guardar el resultado
-        code.append("STORE A, ").append(getAddress(res)).append("\n");
+        // etiqueta: GR_END
+        code.append(labelEnd).append(" :\n");
 
         return code.toString();
     }
@@ -252,31 +253,27 @@ public class ExecutionEnvironmentEns2001
         String labelTrue = getNewLabel("NEQ_TRUE");
         String labelEnd = getNewLabel("NEQ_END");
 
-        // Cargar op1 en A
-        code.append(loadOperandToA(op1));
+        // comparar op1 y op2
+        code.append("CMP ")
+                .append(getAddress(op1)).append(", ").append(getAddress(op2)).append("\n");
 
-        // Cargar op2 en B
-        code.append("LOAD B, ").append(getAddress(op2)).append("\n");
+        // res = 0
+        code.append("MOVE #0, ").append(getAddress(res)).append("\n");
 
-        // Comparar A y B
-        code.append("CMP A, B\n");
+        // si temp ≠ 0, saltar a NEQ_TRUE
+        code.append("BNZ $").append(labelTrue).append("\n");
 
-        // Si son distintos, salta a NEQ_TRUE
-        code.append("BNE ").append(labelTrue).append("\n");
+        // salto incondicional al final
+        code.append("BR $").append(labelEnd).append("\n");
 
-        // Si son iguales, resultado es 0 (false)
-        code.append("MOVE A, #0\n");
-        code.append("BR ").append(labelEnd).append("\n");
+        // etiqueta: NEQ_TRUE
+        code.append(labelTrue).append(" :\n");
 
-        // Si son distintos, resultado es 1 (true)
-        code.append(labelTrue).append(":\n");
-        code.append("MOVE A, #1\n");
+        // res = 1
+        code.append("MOVE #1, ").append(getAddress(res)).append("\n");
 
-        // Fin
-        code.append(labelEnd).append(":\n");
-
-        // Guardar el resultado en res
-        code.append("STORE A, ").append(getAddress(res)).append("\n");
+        // etiqueta: NEQ_END
+        code.append(labelEnd).append(" :\n");
 
         return code.toString();
     }
@@ -287,24 +284,37 @@ public class ExecutionEnvironmentEns2001
         return base + "_" + (labelCounter++);
     }
 
-    private String loadOperandToA(OperandIF operand) {
-        return "LOAD A, " + getAddress(operand) + "\n";
-    }
-
     private String translateAnd(OperandIF res, OperandIF op1, OperandIF op2) {
-        return loadOperandToA(op1) + // A := op1
-                "LOAD B, " + getAddress(op2) + "\n" + // B := op2
-                "AND A, B\n" + // A := A && B
-                "STORE A, " + getAddress(res) + "\n"; // res := A
+        StringBuilder code = new StringBuilder();
+
+        String labelEnd = getNewLabel("AND_END");
+
+        // Inicializa res a 0
+        code.append("MOVE #0, ").append(getAddress(res)).append("\n");
+
+        // Compara op1 y op2
+        code.append("CMP ").append(getAddress(op1)).append(", #0\n");
+        code.append("BZ $").append(labelEnd).append("\n"); // Si op1 es 0, salta al final
+
+        code.append("CMP ").append(getAddress(op2)).append(", #0\n");
+        code.append("BZ $").append(labelEnd).append("\n"); // Si op2 es 0, salta al final
+
+        // Si ambos son distintos de 0, res = 1
+        code.append("MOVE #1, ").append(getAddress(res)).append("\n");
+
+        // Etiqueta final
+        code.append(labelEnd).append(" :\n");
+
+        return code.toString();
     }
 
     private String translateBr(OperandIF label) {
-        return "JUMP " + label.toString() + "\n"; // Salto incondicional a la etiqueta
+        return "BR $" + label.toString() + "\n"; // Salto incondicional a la etiqueta
     }
 
     private String translateBrf(OperandIF label, OperandIF condition) {
-        return loadOperandToA(condition) + // A := condición (Boolean)
-                "JZ A, " + label.toString() + "\n"; // Si A == 0 (false), salta
+        return "CMP " + getAddress(condition) + ", #0\n" + // A := condición (Boolean)
+                "BZ $" + label.toString() + "\n"; // Si A == 0 (false), salta
     }
 
     private String translateCall(OperandIF function) {
@@ -356,8 +366,8 @@ public class ExecutionEnvironmentEns2001
         if (y instanceof Field) {
             Field field = (Field) y;
             String direccionBase = getAddress(field.getRegistro());
-            return "LOAD A, " + direccionBase + "\n" +
-                    "STORE A, " + getAddress(res) + "\n";
+            String campo = field.getCampo();
+            return "MOVE " + direccionBase + "." + campo + ", " + getAddress(res) + "\n"; // Mueve el campo del registro
         }
 
         return "";
@@ -375,8 +385,11 @@ public class ExecutionEnvironmentEns2001
             return "#" + val.getValue();
         } else if (operand instanceof Label) {
             return operand.toString();
+        } else if (operand instanceof Field) {
+            Field field = (Field) operand;
+            return "/" + field.getAddress();
         }
-        return "UNKNOWN";
+        return "#0"; // Valor por defecto si no se reconoce el tipo de operando (funciones)
     }
 
 }

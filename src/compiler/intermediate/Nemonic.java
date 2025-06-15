@@ -30,7 +30,9 @@ public class Nemonic {
     public final static String DECL = "DECL"; // DECL x --> Declara la variable x (declaración de variable)
     public final static String CADENA = "CADENA"; // CADENA s --> Declara la cadena s (declaración de cadena)
 
-    public final static String VARGLOBAL = "VARGLOBAL"; // VARGLOBAL x --> Declara la variable global x (declaración de
-                                                        // variable global
-    public final static String CONSTANT = "CONSTANT"; // VARLOCAL x --> Declara la variable local x (declaración de
+    public final static String VARGLOBAL = "VARGLOBAL"; // VARGLOBAL x --> Declara la variable global x
+
+    public final static String CONSTANT = "CONSTANT"; // Constant x --> Declara constante x
+
+    public final static String ACCESO = "ACCESO"; // ACCESO x.y --> Acceso al campo de un registro
 }

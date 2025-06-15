@@ -3,33 +3,76 @@
 
 procedure testCase05 () is
 
-      	t: Boolean;
+    type test is record
+		a: Integer;
+		b: Integer;
+	end record;
+
+	type test2 is record
+		a: Integer;
+		b: Integer;
+		c: test;
+		end record;
+
+	type Tpersona is record 
+		dni: Integer; 
+		test1: test2;
+		edad: Integer; 
+	end record;
+
+    t: Boolean;
 	x: Integer;
+	p: Tpersona;
+	r: test;
 
 begin
-	Put_line("IF OPERADORES");
+	--Put_line("IF OPERADORES");
 	
-	t := True;
-        Put_line("t(cierto):");
+	-- t := True;
+    --    Put_line("t(cierto):");
        
-	if t and (True and True) then
-                Put_line("cierto");
-        end if;
+	-- if t and (True and True) then
+        --        Put_line("cierto");
+       -- end if;
+	p.dni := 65535;
+	p.edad := 30;
+	Put_line("DNI: ");
+	Put_line(p.dni);
+	Put_line("Edad: ");
+	Put_line(p.edad);
+	-- x := 2;	
+	--Put_line("x mayor (cierto):");
 
-	x := 2;	
-	Put_line("x mayor (cierto):");
+	p.test1.c.a := 25;
+	Put_line("DNI2: ");
+	Put_line(p.test1.c.a);
 	
 	-- if sin parentesis
-	if x > 1 then
-		Put_line("cierto");
-	end if;
+	-- if x > 1 then
+	--	Put_line("cierto");
+	-- end if;
 
-	Put_line("x desigual (cierto):");
+	--Put_line("x desigual (cierto):");
+
+	x := 3;
+	t := true;
+	Put_line(x);
+	Put_line(t);
+	t := x/=4;
+	Put_line(x);
+	Put_line(t);
 
 	-- if con parentesis. Es posible al ser una expresion logica en si misma
-	if (x/=3) then		
-        	Put_line("cierto");
+	if ((x>2) and x/=4) then		
+       	Put_line("X es distinto de 4 (cierto):");
+		Put_line(x);
+		Put_line(t);
+ 	else
+		Put_line("X es igual a 4 (falso):");
 	end if;
+
+	-- t := x/=3;
+
 
 end testCase05;
 

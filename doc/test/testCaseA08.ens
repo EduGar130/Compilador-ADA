@@ -1,14 +1,18 @@
 ; Quadruple - [VARGLOBAL a, 0, null]
 ; DECLARACION GLOBAL a --> reserva espacio global
-MOVE #0, /65535
+MOVE #0, /65529
 
 ; Quadruple - [VARGLOBAL b, 0, null]
 ; DECLARACION GLOBAL b --> reserva espacio global
-MOVE #0, /65534
+MOVE #0, /65528
 
 ; Quadruple - [VARGLOBAL z, 0, null]
 ; DECLARACION GLOBAL z --> reserva espacio global
-MOVE #0, /65533
+MOVE #0, /65530
+
+; Quadruple - [VARGLOBAL k, 0, null]
+; DECLARACION GLOBAL k --> reserva espacio global
+MOVE #0, /65527
 
 ; Quadruple - [INIT null, null, null]
 ; Inicio del programa
@@ -16,9 +20,63 @@ MOVE #0, /65533
 ; Quadruple - [WRSTR SUBPROGRAMAS FUNCIONES, L_0, null]
 WRSTR /L_0
 
+; Quadruple - [WRSTR resta(5,2):, L_1, null]
+WRSTR /L_1
+
+; Quadruple - [MV T_3, null, null]
+MOVE #0, /65523
+
+; Quadruple - [MOVE z, T_3, null]
+MOVE /65523, /65530
+
+; Quadruple - [MV T_4, z, null]
+MOVE /65530, /65522
+
+; Quadruple - [WRINT T_4, null, null]
+WRINT /65522
+
+; Quadruple - [WRSTR resta2(5,2):, L_2, null]
+WRSTR /L_2
+
+; Quadruple - [MV T_6, 5, null]
+MOVE #5, /65520
+
+; Quadruple - [MOVE a, T_6, null]
+MOVE /65520, /65529
+
+; Quadruple - [MV T_8, 2, null]
+MOVE #2, /65518
+
+; Quadruple - [MOVE b, T_8, null]
+MOVE /65518, /65528
+
+; Quadruple - [MV T_10, false, null]
+MOVE #0, /65516
+
+; Quadruple - [MOVE k, T_10, null]
+MOVE /65516, /65527
+
+; Quadruple - [MV T_15, null, null]
+MOVE #0, /65511
+
+; Quadruple - [MOVE z, T_15, null]
+MOVE /65511, /65530
+
+; Quadruple - [MV T_16, z, null]
+MOVE /65530, /65510
+
+; Quadruple - [WRINT T_16, null, null]
+WRINT /65510
+
 ; Quadruple - [HALT null, null, null]
 HALT
 
 ; Quadruple - [CADENA SUBPROGRAMAS FUNCIONES, L_0, null]
 L_0 : DATA "SUBPROGRAMAS FUNCIONES"
+
+; Quadruple - [CADENA resta(5,2):, L_1, null]
+L_1 : DATA "resta(5,2):"
+
+; Quadruple - [CADENA resta2(5,2):, L_2, null]
+L_2 : DATA "resta2(5,2):"
 

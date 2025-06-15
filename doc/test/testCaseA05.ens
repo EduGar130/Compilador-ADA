@@ -1,146 +1,216 @@
+; Quadruple - [VARGLOBAL p, 0, null]
+; DECLARACION GLOBAL p --> reserva espacio global
+MOVE #0, /65535
+
+; Quadruple - [VARGLOBAL r, 0, null]
+; DECLARACION GLOBAL r --> reserva espacio global
+MOVE #0, /65527
+
 ; Quadruple - [VARGLOBAL t, 0, null]
 ; DECLARACION GLOBAL t --> reserva espacio global
-MOVE #0, /65535
+MOVE #0, /65528
 
 ; Quadruple - [VARGLOBAL x, 0, null]
 ; DECLARACION GLOBAL x --> reserva espacio global
-MOVE #0, /65534
+MOVE #0, /65529
 
 ; Quadruple - [INIT null, null, null]
 ; Inicio del programa
 
-; Quadruple - [WRSTR IF OPERADORES, L_0, null]
-WRSTR /L_0
+; Quadruple - [MV T_1, 65535, null]
+MOVE #65535, /65524
 
-; Quadruple - [MV T_1, true, null]
-MOVE #1, /65532
+; Quadruple - [MOVE p.dni, T_1, null]
+MOVE /65524, /65535
 
-; Quadruple - [MOVE t, T_1, null]
-MOVE /65532, /0
+; Quadruple - [MV T_3, 30, null]
+MOVE #30, /65522
 
-; Quadruple - [WRSTR t(cierto):, L_1, null]
-WRSTR /L_1
+; Quadruple - [MOVE p.edad, T_3, null]
+MOVE /65522, /65530
 
-; Quadruple - [MV T_2, t, null]
-MOVE /0, /65531
-
-; Quadruple - [MV T_3, true, null]
-MOVE #1, /65530
-
-; Quadruple - [MV T_4, true, null]
-MOVE #1, /65529
-
-; Quadruple - [AND T_5, T_3, T_4]
-LOAD A, /65530
-LOAD B, /65529
-AND A, B
-STORE A, /65528
-
-; Quadruple - [AND T_6, T_2, T_5]
-LOAD A, /65531
-LOAD B, /65528
-AND A, B
-STORE A, /65527
-
-; Quadruple - [BRF T_6, L_0, null]
-LOAD A, /65527
-JZ A, L_0
-
-; Quadruple - [WRSTR cierto, L_2, null]
+; Quadruple - [WRSTR DNI: , L_2, null]
 WRSTR /L_2
+
+; Quadruple - [ACCESO T_4, p.dni, null]
+; ACCESO al campo dni del registro p --> reserva espacio para el campo
+MOVE /65535, /65521
+
+; Quadruple - [WRINT T_4, null, null]
+WRINT /65521
+
+; Quadruple - [WRSTR Edad: , L_3, null]
+WRSTR /L_3
+
+; Quadruple - [ACCESO T_5, p.edad, null]
+; ACCESO al campo edad del registro p --> reserva espacio para el campo
+MOVE /65530, /65520
+
+; Quadruple - [WRINT T_5, null, null]
+WRINT /65520
+
+; Quadruple - [MV T_9, 25, null]
+MOVE #25, /65516
+
+; Quadruple - [MOVE p.test1, T_9, null]
+MOVE /65516, /65534
+
+; Quadruple - [WRSTR DNI2: , L_4, null]
+WRSTR /L_4
+
+; Quadruple - [ACCESO T_10, p.test1, null]
+; ACCESO al campo test1 del registro p --> reserva espacio para el campo
+MOVE /65534, /65515
+
+; Quadruple - [ACCESO T_11, p.c, null]
+; ACCESO al campo c del registro p --> reserva espacio para el campo
+MOVE /65533, /65514
+
+; Quadruple - [ACCESO T_12, p.a, null]
+; ACCESO al campo a del registro p --> reserva espacio para el campo
+MOVE /65535, /65513
+
+; Quadruple - [WRINT T_10, null, null]
+WRINT /65515
+
+; Quadruple - [MV T_14, 3, null]
+MOVE #3, /65511
+
+; Quadruple - [MOVE x, T_14, null]
+MOVE /65511, /65529
+
+; Quadruple - [MV T_16, true, null]
+MOVE #1, /65509
+
+; Quadruple - [MOVE t, T_16, null]
+MOVE /65509, /65528
+
+; Quadruple - [MV T_17, x, null]
+MOVE /65529, /65508
+
+; Quadruple - [WRINT T_17, null, null]
+WRINT /65508
+
+; Quadruple - [MV T_18, t, null]
+MOVE /65528, /65507
+
+; Quadruple - [WRINT T_18, null, null]
+WRINT /65507
+
+; Quadruple - [MV T_20, x, null]
+MOVE /65529, /65505
+
+; Quadruple - [MV T_21, 4, null]
+MOVE #4, /65504
+
+; Quadruple - [NEQ T_22, T_20, T_21]
+CMP /65505, /65504
+MOVE #0, /65503
+BNZ $NEQ_TRUE_0
+BR $NEQ_END_1
+NEQ_TRUE_0 :
+MOVE #1, /65503
+NEQ_END_1 :
+
+; Quadruple - [MOVE t, T_22, null]
+MOVE /65503, /65528
+
+; Quadruple - [MV T_23, x, null]
+MOVE /65529, /65502
+
+; Quadruple - [WRINT T_23, null, null]
+WRINT /65502
+
+; Quadruple - [MV T_24, t, null]
+MOVE /65528, /65501
+
+; Quadruple - [WRINT T_24, null, null]
+WRINT /65501
+
+; Quadruple - [MV T_25, x, null]
+MOVE /65529, /65500
+
+; Quadruple - [MV T_26, 2, null]
+MOVE #2, /65499
+
+; Quadruple - [GR T_27, T_25, T_26]
+CMP /65500, /65499
+MOVE #0, /65498
+BN $GR_END_2
+BZ $GR_END_2
+MOVE #1, /65498
+GR_END_2 :
+
+; Quadruple - [MV T_28, x, null]
+MOVE /65529, /65497
+
+; Quadruple - [MV T_29, 4, null]
+MOVE #4, /65496
+
+; Quadruple - [NEQ T_30, T_28, T_29]
+CMP /65497, /65496
+MOVE #0, /65495
+BNZ $NEQ_TRUE_3
+BR $NEQ_END_4
+NEQ_TRUE_3 :
+MOVE #1, /65495
+NEQ_END_4 :
+
+; Quadruple - [AND T_31, T_27, T_30]
+MOVE #0, /65494
+CMP /65498, #0
+BZ $AND_END_5
+CMP /65495, #0
+BZ $AND_END_5
+MOVE #1, /65494
+AND_END_5 :
+
+; Quadruple - [BRF T_31, L_0, null]
+CMP /65494, #0
+BZ $L_0
+
+; Quadruple - [WRSTR X es distinto de 4 (cierto):, L_5, null]
+WRSTR /L_5
+
+; Quadruple - [MV T_32, x, null]
+MOVE /65529, /65493
+
+; Quadruple - [WRINT T_32, null, null]
+WRINT /65493
+
+; Quadruple - [MV T_33, t, null]
+MOVE /65528, /65492
+
+; Quadruple - [WRINT T_33, null, null]
+WRINT /65492
+
+; Quadruple - [BR L_1, null, null]
+BR $L_1
 
 ; Quadruple - [INL L_0, null, null]
 L_0:
 
-; Quadruple - [MV T_8, 2, null]
-MOVE #2, /65525
-
-; Quadruple - [MOVE x, T_8, null]
-MOVE /65525, /0
-
-; Quadruple - [WRSTR x mayor (cierto):, L_3, null]
-WRSTR /L_3
-
-; Quadruple - [MV T_9, x, null]
-MOVE /0, /65524
-
-; Quadruple - [MV T_10, 1, null]
-MOVE #1, /65523
-
-; Quadruple - [GR T_11, T_9, T_10]
-LOAD A, /65524
-LOAD B, /65523
-CMP A, B
-BG GR_TRUE_0
-MOVE A, #0
-BR GR_END_1
-GR_TRUE_0:
-MOVE A, #1
-GR_END_1:
-STORE A, /65522
-
-; Quadruple - [BRF T_11, L_1, null]
-LOAD A, /65522
-JZ A, L_1
-
-; Quadruple - [WRSTR cierto, L_4, null]
-WRSTR /L_4
+; Quadruple - [WRSTR X es igual a 4 (falso):, L_6, null]
+WRSTR /L_6
 
 ; Quadruple - [INL L_1, null, null]
 L_1:
 
-; Quadruple - [WRSTR x desigual (cierto):, L_5, null]
-WRSTR /L_5
-
-; Quadruple - [MV T_12, x, null]
-MOVE /0, /65521
-
-; Quadruple - [MV T_13, 3, null]
-MOVE #3, /65520
-
-; Quadruple - [NEQ T_14, T_12, T_13]
-LOAD A, /65521
-LOAD B, /65520
-CMP A, B
-BNE NEQ_TRUE_2
-MOVE A, #0
-BR NEQ_END_3
-NEQ_TRUE_2:
-MOVE A, #1
-NEQ_END_3:
-STORE A, /65519
-
-; Quadruple - [BRF T_14, L_2, null]
-LOAD A, /65519
-JZ A, L_2
-
-; Quadruple - [WRSTR cierto, L_6, null]
-WRSTR /L_6
-
-; Quadruple - [INL L_2, null, null]
-L_2:
-
 ; Quadruple - [HALT null, null, null]
 HALT
 
-; Quadruple - [CADENA IF OPERADORES, L_0, null]
-L_0 : DATA "IF OPERADORES"
+; Quadruple - [CADENA DNI: , L_2, null]
+L_2 : DATA "DNI: "
 
-; Quadruple - [CADENA t(cierto):, L_1, null]
-L_1 : DATA "t(cierto):"
+; Quadruple - [CADENA Edad: , L_3, null]
+L_3 : DATA "Edad: "
 
-; Quadruple - [CADENA cierto, L_2, null]
-L_2 : DATA "cierto"
+; Quadruple - [CADENA DNI2: , L_4, null]
+L_4 : DATA "DNI2: "
 
-; Quadruple - [CADENA x mayor (cierto):, L_3, null]
-L_3 : DATA "x mayor (cierto):"
+; Quadruple - [CADENA X es distinto de 4 (cierto):, L_5, null]
+L_5 : DATA "X es distinto de 4 (cierto):"
 
-; Quadruple - [CADENA cierto, L_4, null]
-L_4 : DATA "cierto"
-
-; Quadruple - [CADENA x desigual (cierto):, L_5, null]
-L_5 : DATA "x desigual (cierto):"
-
-; Quadruple - [CADENA cierto, L_6, null]
-L_6 : DATA "cierto"
+; Quadruple - [CADENA X es igual a 4 (falso):, L_6, null]
+L_6 : DATA "X es igual a 4 (falso):"
 

@@ -19,6 +19,9 @@ public class SymbolConstant extends SymbolBase {
     /** Valor de la constante. */
     private Object value;
 
+    /** Dirección de memoria asociada a la constante (si aplica). */
+    private int address;
+
     /**
      * Constructor de SymbolConstant.
      * 
@@ -46,5 +49,13 @@ public class SymbolConstant extends SymbolBase {
      */
     public Object getValue() {
         return value;
+    }
+
+    public void setAddress(int address) {
+        this.address = address;
+    }
+
+    public int getAddress() {
+        return address;
     }
 }
